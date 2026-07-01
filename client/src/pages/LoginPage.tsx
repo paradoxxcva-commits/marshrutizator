@@ -348,23 +348,23 @@ export default function LoginPage(): React.ReactElement {
             <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, color: '#ffffff', fontFamily: "'MuseoModerno', sans-serif", letterSpacing: 5, textShadow: '0 0 20px rgba(74, 155, 217, 0.3)' }}>МАРШРУТИЗАТОР</h1>
           </div>
 
-          <h2 style={{ margin: '0 0 12px', fontSize: 36, fontWeight: 700, color: 'white', lineHeight: 1.15, letterSpacing: '-0.02em', fontFamily: "'MuseoModerno', sans-serif", textTransform: 'lowercase' }}>
-            {t('login.tagline')}
+          <h2 style={{ margin: '0 0 16px', fontSize: 34, fontWeight: 700, color: 'white', lineHeight: 1.2, letterSpacing: '-0.02em', fontFamily: "'MuseoModerno', sans-serif" }}>
+            Путешествия рождаются здесь.
           </h2>
           <p style={{ margin: '0 0 44px', fontSize: 15, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7 }}>
-            {t('login.description')}
+            Простой планировщик для больших приключений. Собирайте интересные места, стройте маршруты и делитесь планами в реальном времени.
           </p>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
             {[
-              { Icon: Map, label: t('login.features.maps'), desc: t('login.features.mapsDesc') },
-              { Icon: Zap, label: t('login.features.realtime'), desc: t('login.features.realtimeDesc') },
-              { Icon: Wallet, label: t('login.features.budget'), desc: t('login.features.budgetDesc') },
-              { Icon: Users, label: t('login.features.collab'), desc: t('login.features.collabDesc') },
-              { Icon: CheckSquare, label: t('login.features.packing'), desc: t('login.features.packingDesc') },
-              { Icon: BookMarked, label: t('login.features.bookings'), desc: t('login.features.bookingsDesc') },
-              { Icon: FolderOpen, label: t('login.features.files'), desc: t('login.features.filesDesc') },
-              { Icon: Route, label: t('login.features.routes'), desc: t('login.features.routesDesc') },
+              { Icon: Map, label: 'Умная карта', desc: 'Наглядный поиск достопримечательностей, отелей и кафе. Весь ваш маршрут — как на ладони.' },
+              { Icon: Zap, label: 'Вместе в реальном времени', desc: 'Приглашайте друзей и планируйте трип одновременно — любые изменения видны всей команде мгновенно.' },
+              { Icon: Wallet, label: 'Общий бюджет', desc: 'Считайте расходы, распределяйте траты между участниками поездки и не выходите за рамки лимита.' },
+              { Icon: Users, label: 'Общие поездки', desc: 'Делитесь готовыми маршрутами с близкими или открывайте доступ для совместного редактирования в один клик.' },
+              { Icon: CheckSquare, label: 'Удобные чек-листы', desc: 'Списки вещей, важных дел перед выездом и покупок. Никаких забытых паспортов и зарядок.' },
+              { Icon: BookMarked, label: 'Таймлайн поездки', desc: 'Сохраняйте информацию об отелях, билетах и бронированиях ресторанов прямо внутри вашего расписания.' },
+              { Icon: FolderOpen, label: 'Важные документы', desc: 'Загружайте страховки, ваучеры и билеты в личный кабинет, чтобы они всегда были под рукой в нужный момент.' },
+              { Icon: Route, label: 'Оптимальные маршруты', desc: 'Наш алгоритм поможет выстроить точки в правильном порядке, чтобы вы не тратили лишнее время на дорогу.' },
             ].map(({ Icon, label, desc }) => (
               <div key={label} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 14, padding: '14px 12px', border: '1px solid rgba(255,255,255,0.06)', textAlign: 'left', transition: 'background 200ms cubic-bezier(0.23,1,0.32,1), border-color 200ms cubic-bezier(0.23,1,0.32,1)' }}
                 onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)' }}
@@ -377,7 +377,7 @@ export default function LoginPage(): React.ReactElement {
           </div>
 
           <p style={{ marginTop: 36, fontSize: 11.5, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.03em' }}>
-            {t('login.selfHosted')}
+            Ваш идеальный гид · Полностью бесплатно · Планируйте без ограничений
           </p>
         </div>
       </div>
