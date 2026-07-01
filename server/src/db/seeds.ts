@@ -50,8 +50,9 @@ function seedAdminAccount(db: Database.Database): void {
 
     const hash = bcrypt.hashSync(password, BCRYPT_COST);
     const username = 'admin';
+    const mustChange = (env_admin_email && env_admin_pw) ? 0 : 1;
 
-    db.prepare('INSERT INTO users (username, email, password_hash, role, must_change_password) VALUES (?, ?, ?, ?, 1)').run(username, email, hash, 'admin');
+    db.prepare('INSERT INTO users (username, email, password_hash, role, must_change_password) VALUES (?, ?, ?, ?, ?)').run(username, email, hash, 'admin', mustChange);
 
     console.log('');
     console.log('╔══════════════════════════════════════════════╗');

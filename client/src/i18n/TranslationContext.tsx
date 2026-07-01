@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, ReactNode } from 'react'
 import { useSettingsStore } from '../store/settingsStore'
-import en from '@trek/shared/i18n/en'
-import type { SupportedLanguageCode } from '@trek/shared'
+import en from '@marshrutizator/shared/i18n/en'
+import type { SupportedLanguageCode } from '@marshrutizator/shared'
 import {
   SUPPORTED_LANGUAGES,
   getLocaleForLanguage,
@@ -9,8 +9,8 @@ import {
   isRtlLanguage,
   escapeHtml,
   sanitizeInlineHtml,
-} from '@trek/shared'
-import type { TranslationStrings } from '@trek/shared/i18n'
+} from '@marshrutizator/shared'
+import type { TranslationStrings } from '@marshrutizator/shared/i18n'
 
 export { SUPPORTED_LANGUAGES }
 
@@ -18,26 +18,26 @@ export { SUPPORTED_LANGUAGES }
 // Only the active locale is fetched; en is always available synchronously as the fallback.
 const localeLoaders: Record<SupportedLanguageCode, () => Promise<{ default: TranslationStrings }>> = {
   en:      () => Promise.resolve({ default: en }),
-  de:      () => import('@trek/shared/i18n/de'),
-  es:      () => import('@trek/shared/i18n/es'),
-  fr:      () => import('@trek/shared/i18n/fr'),
-  hu:      () => import('@trek/shared/i18n/hu'),
-  it:      () => import('@trek/shared/i18n/it'),
-  tr:      () => import('@trek/shared/i18n/tr'),
-  ru:      () => import('@trek/shared/i18n/ru'),
-  zh:      () => import('@trek/shared/i18n/zh'),
-  'zh-TW': () => import('@trek/shared/i18n/zh-TW'),
-  nl:      () => import('@trek/shared/i18n/nl'),
-  id:      () => import('@trek/shared/i18n/id'),
-  ar:      () => import('@trek/shared/i18n/ar'),
-  br:      () => import('@trek/shared/i18n/br'),
-  cs:      () => import('@trek/shared/i18n/cs'),
-  pl:      () => import('@trek/shared/i18n/pl'),
-  ja:      () => import('@trek/shared/i18n/ja'),
-  ko:      () => import('@trek/shared/i18n/ko'),
-  uk:      () => import('@trek/shared/i18n/uk'),
-  gr:      () => import('@trek/shared/i18n/gr'),
-  sv:      () => import('@trek/shared/i18n/sv'),
+  de:      () => import('@marshrutizator/shared/i18n/de'),
+  es:      () => import('@marshrutizator/shared/i18n/es'),
+  fr:      () => import('@marshrutizator/shared/i18n/fr'),
+  hu:      () => import('@marshrutizator/shared/i18n/hu'),
+  it:      () => import('@marshrutizator/shared/i18n/it'),
+  tr:      () => import('@marshrutizator/shared/i18n/tr'),
+  ru:      () => import('@marshrutizator/shared/i18n/ru'),
+  zh:      () => import('@marshrutizator/shared/i18n/zh'),
+  'zh-TW': () => import('@marshrutizator/shared/i18n/zh-TW'),
+  nl:      () => import('@marshrutizator/shared/i18n/nl'),
+  id:      () => import('@marshrutizator/shared/i18n/id'),
+  ar:      () => import('@marshrutizator/shared/i18n/ar'),
+  br:      () => import('@marshrutizator/shared/i18n/br'),
+  cs:      () => import('@marshrutizator/shared/i18n/cs'),
+  pl:      () => import('@marshrutizator/shared/i18n/pl'),
+  ja:      () => import('@marshrutizator/shared/i18n/ja'),
+  ko:      () => import('@marshrutizator/shared/i18n/ko'),
+  uk:      () => import('@marshrutizator/shared/i18n/uk'),
+  gr:      () => import('@marshrutizator/shared/i18n/gr'),
+  sv:      () => import('@marshrutizator/shared/i18n/sv'),
 }
 
 // Re-export pure helpers that live in shared so downstream consumers can import them
@@ -103,7 +103,7 @@ interface TranslationProviderProps {
 }
 
 export function TranslationProvider({ children }: TranslationProviderProps) {
-  const language = useSettingsStore((s) => s.settings.language) || 'en'
+  const language = useSettingsStore((s) => s.settings.language) || 'ru'
   const [strings, setStrings] = useState<TranslationStrings>(en)
 
   useEffect(() => {

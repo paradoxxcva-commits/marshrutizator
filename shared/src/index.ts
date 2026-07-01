@@ -1,5 +1,5 @@
 /**
- * @trek/shared — single source of truth for TREK's API contracts.
+ * @marshrutizator/shared — single source of truth for TREK's API contracts.
  *
  * Zod schemas defined here are consumed by BOTH the server (validation +
  * inferred DTO types) and the client (typed requests/responses). A route is

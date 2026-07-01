@@ -4,7 +4,7 @@ import { useTranslation } from '../../i18n'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useToast } from '../shared/Toast'
 import CustomSelect from '../shared/CustomSelect'
-import { MapView } from '../Map/MapView'
+import { MapViewGL } from '../Map/MapViewGL'
 import GlMapPreview from './MapboxPreview'
 import Section from './Section'
 import ToggleSwitch from './ToggleSwitch'
@@ -124,14 +124,13 @@ function StyleDropdown({ value, provider, onChange }: { value: string; provider:
   )
 }
 
-type Provider = 'leaflet' | GlMapProvider
+type Provider = GlMapProvider
 
 function normalizeProvider(value: unknown): Provider {
-  return value === 'mapbox-gl' || value === 'maplibre-gl' ? value : 'leaflet'
+  return value === 'mapbox-gl' || value === 'maplibre-gl' ? value : 'maplibre-gl'
 }
 
 function styleForProvider(provider: Provider, style?: string | null): string {
-  if (provider === 'leaflet') return style || MAPBOX_DEFAULT_STYLE
   if (provider === 'mapbox-gl' && isOpenFreeMapStyle(style)) return MAPBOX_DEFAULT_STYLE
   return normalizeStyleForProvider(provider, style)
 }
@@ -198,7 +197,7 @@ export default function MapSettingsTab(): React.ReactElement {
   const saveMapSettings = async (): Promise<void> => {
     setSaving(true)
     try {
-      const glStyle = provider === 'leaflet' ? mapboxStyle : normalizeStyleForProvider(provider, mapboxStyle)
+      const glStyle = normalizeStyleForProvider(provider, mapboxStyle)
       setMapboxStyle(glStyle)
       // Save into the active provider's own slot so the other provider's style survives.
       const stylePatch = provider === 'maplibre-gl' ? { maplibre_style: glStyle } : { mapbox_style: glStyle }
@@ -226,7 +225,7 @@ export default function MapSettingsTab(): React.ReactElement {
   const supports3d = true
   const changeProvider = (nextProvider: Provider) => {
     setProvider(nextProvider)
-    if (nextProvider !== 'leaflet') setMapboxStyle(styleForProvider(nextProvider, mapboxStyle))
+    setMapboxStyle(styleForProvider(nextProvider, mapboxStyle))
   }
 
   return (
@@ -234,21 +233,27 @@ export default function MapSettingsTab(): React.ReactElement {
       {/* Provider picker — big cards so the choice is obvious */}
       <div>
         <label className="block text-sm font-medium text-slate-700 mb-2">{t('settings.mapProvider')}</label>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <button
             type="button"
-            onClick={() => changeProvider('leaflet')}
-            className={`flex items-start gap-3 p-3 rounded-lg border text-left transition-colors ${
-              provider === 'leaflet'
+            onClick={() => changeProvider('maplibre-gl')}
+            className={`relative flex items-start gap-3 p-3 rounded-lg border text-left transition-colors ${
+              provider === 'maplibre-gl'
                 ? 'border-slate-900 bg-slate-50 dark:bg-slate-800 dark:border-slate-200'
                 : 'border-slate-200 hover:border-slate-400 dark:border-slate-700'
             }`}
           >
-            <Layers size={18} className="mt-0.5 flex-shrink-0 text-slate-700 dark:text-slate-300" />
-            <div>
-              <div className="text-sm font-medium text-slate-900 dark:text-white">Leaflet</div>
-              <div className="hidden sm:block text-xs text-slate-500 mt-0.5">{t('settings.mapLeafletSubtitle')}</div>
+            <Globe2 size={18} className="mt-0.5 flex-shrink-0 text-slate-700 dark:text-slate-300" />
+            <div className="min-w-0">
+              <div className="text-sm font-medium text-slate-900 dark:text-white">
+                <span className="sm:hidden">MapLibre</span>
+                <span className="hidden sm:inline">MapLibre GL</span>
+              </div>
+              <div className="hidden sm:block text-xs text-slate-500 mt-0.5">{t('settings.mapMapLibreSubtitle')}</div>
             </div>
+            <span className="hidden sm:inline-block absolute top-2 right-2 text-[9px] font-semibold tracking-wide uppercase px-1.5 py-[3px] rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 leading-none">
+              По умолчанию
+            </span>
           </button>
           <button
             type="button"
@@ -267,28 +272,9 @@ export default function MapSettingsTab(): React.ReactElement {
               </div>
               <div className="hidden sm:block text-xs text-slate-500 mt-0.5">{t('settings.mapMapboxSubtitle')}</div>
             </div>
-            {/* Experimental badge only on ≥sm; on mobile there's no room next to the title. */}
             <span className="hidden sm:inline-block absolute top-2 right-2 text-[9px] font-semibold tracking-wide uppercase px-1.5 py-[3px] rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 leading-none">
               {t('settings.mapExperimental')}
             </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => changeProvider('maplibre-gl')}
-            className={`relative flex items-start gap-3 p-3 rounded-lg border text-left transition-colors ${
-              provider === 'maplibre-gl'
-                ? 'border-slate-900 bg-slate-50 dark:bg-slate-800 dark:border-slate-200'
-                : 'border-slate-200 hover:border-slate-400 dark:border-slate-700'
-            }`}
-          >
-            <Globe2 size={18} className="mt-0.5 flex-shrink-0 text-slate-700 dark:text-slate-300" />
-            <div className="min-w-0">
-              <div className="text-sm font-medium text-slate-900 dark:text-white">
-                <span className="sm:hidden">MapLibre</span>
-                <span className="hidden sm:inline">MapLibre GL</span>
-              </div>
-              <div className="hidden sm:block text-xs text-slate-500 mt-0.5">{t('settings.mapMapLibreSubtitle')}</div>
-            </div>
           </button>
         </div>
         <p className="text-xs text-slate-400 mt-2">
@@ -296,31 +282,8 @@ export default function MapSettingsTab(): React.ReactElement {
         </p>
       </div>
 
-      {/* Leaflet settings */}
-      {provider === 'leaflet' && (
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1.5">{t('settings.mapTemplate')}</label>
-          <CustomSelect
-            value={mapTileUrl}
-            onChange={(value: string) => { if (value) setMapTileUrl(value) }}
-            placeholder={t('settings.mapTemplatePlaceholder.select')}
-            options={MAP_PRESETS.map(p => ({ value: p.url, label: p.name }))}
-            size="sm"
-            style={{ marginBottom: 8 }}
-          />
-          <input
-            type="text"
-            value={mapTileUrl}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMapTileUrl(e.target.value)}
-            placeholder="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-slate-400 focus:border-transparent"
-          />
-          <p className="text-xs text-slate-400 mt-1">{t('settings.mapDefaultHint')}</p>
-        </div>
-      )}
-
       {/* GL settings */}
-      {provider !== 'leaflet' && (
+      {provider && (
         <div className="space-y-3">
           {provider === 'mapbox-gl' && (
           <div>
@@ -427,7 +390,7 @@ export default function MapSettingsTab(): React.ReactElement {
 
       <div>
         <div style={{ position: 'relative', inset: 0, height: '200px', width: '100%' }}>
-          {provider !== 'leaflet' ? (
+          {provider ? (
             <GlMapPreview
               provider={provider}
               token={mapboxToken}
@@ -443,7 +406,7 @@ export default function MapSettingsTab(): React.ReactElement {
             />
           ) : (
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            React.createElement(MapView as any, {
+            React.createElement(MapViewGL as any, {
               places: mapPlaces,
               dayPlaces: [],
               route: null,

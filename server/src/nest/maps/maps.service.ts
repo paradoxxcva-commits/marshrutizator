@@ -6,7 +6,7 @@ import type {
   MapsPlacePhotoResult,
   MapsReverseResult,
   MapsResolveUrlResult,
-} from '@trek/shared';
+} from '@marshrutizator/shared';
 import { DatabaseService } from '../database/database.service';
 import {
   searchPlaces,

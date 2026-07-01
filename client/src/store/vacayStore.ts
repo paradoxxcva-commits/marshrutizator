@@ -6,7 +6,7 @@ import type {
   VacaySetColorRequest, VacayInviteRequest, VacayInviteActionRequest,
   VacayAddYearRequest, VacayToggleEntryRequest, VacayCompanyHolidayRequest,
   VacayUpdateStatsRequest,
-} from '@trek/shared'
+} from '@marshrutizator/shared'
 
 const ax = apiClient
 

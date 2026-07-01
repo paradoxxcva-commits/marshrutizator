@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /settings/
+Disallow: /shared/
+Disallow: /public/
+
+Sitemap: https://marshrutizator.su/sitemap.xml

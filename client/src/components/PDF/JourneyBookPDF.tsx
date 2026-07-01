@@ -1,6 +1,6 @@
 // Journey Photo Book PDF — Polarsteps-inspired, magazine-density
 import { marked } from 'marked'
-import { sanitizeRichTextHtml } from '@trek/shared'
+import { sanitizeRichTextHtml } from '@marshrutizator/shared'
 import type { JourneyDetail, JourneyEntry, JourneyPhoto } from '../../store/journeyStore'
 
 function esc(str: string | null | undefined): string {

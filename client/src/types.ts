@@ -1,6 +1,6 @@
 // Shared types for the TREK travel planner.
 //
-// Domain entity/response types are now sourced from @trek/shared — the single
+// Domain entity/response types are now sourced from @marshrutizator/shared — the single
 // source of truth shared with the server. The Zod schemas there are built to
 // match the REAL server response shapes (see shared/src/<domain>/*.schema.ts,
 // each documented against the producing service). Re-exported here so the rest
@@ -25,7 +25,7 @@ import type {
   Accommodation,
   Tag,
   Category,
-} from '@trek/shared'
+} from '@marshrutizator/shared'
 
 export type {
   Trip,
@@ -118,7 +118,7 @@ export interface Settings {
   map_booking_labels?: boolean
   map_poi_pill_enabled?: boolean
   optimize_from_accommodation?: boolean
-  map_provider?: 'leaflet' | 'mapbox-gl' | 'maplibre-gl'
+  map_provider?: 'mapbox-gl' | 'maplibre-gl'
   mapbox_access_token?: string
   mapbox_style?: string
   maplibre_style?: string

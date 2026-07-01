@@ -7,8 +7,8 @@ import { checkSsrf, createPinnedDispatcher } from '../utils/ssrfGuard';
 // ── Types ──────────────────────────────────────────────────────────────────
 
 import type { NotifEventType } from './notificationPreferencesService';
-import { EMAIL_I18N as I18N, EVENT_TEXTS, PASSWORD_RESET_I18N } from '@trek/shared/i18n/externalNotifications';
-import type { EmailStrings, EventText, PasswordResetStrings, NotificationEventKey } from '@trek/shared/i18n/externalNotifications';
+import { EMAIL_I18N as I18N, EVENT_TEXTS, PASSWORD_RESET_I18N } from '@marshrutizator/shared/i18n/externalNotifications';
+import type { EmailStrings, EventText, PasswordResetStrings, NotificationEventKey } from '@marshrutizator/shared/i18n/externalNotifications';
 
 // Compile-time guard: shared NotificationEventKey and server NotifEventType must stay in sync.
 type _EvtFwd = NotifEventType extends NotificationEventKey ? true : never
@@ -110,9 +110,9 @@ export function getAdminWebhookUrl(): string | null {
   return value ? decrypt_api_key(value) : null;
 }
 
-// ── Email i18n strings — imported from @trek/shared/i18n/externalNotifications ──
+// ── Email i18n strings — imported from @marshrutizator/shared/i18n/externalNotifications ──
 
-// EVENT_TEXTS imported from @trek/shared/i18n/externalNotifications
+// EVENT_TEXTS imported from @marshrutizator/shared/i18n/externalNotifications
 
 // Get localized event text
 export function getEventText(lang: string, event: NotifEventType, params: Record<string, string>): EventText {
@@ -170,7 +170,7 @@ export function buildEmailHtml(subject: string, body: string, lang: string, navi
 
 // ── Password reset email ───────────────────────────────────────────────────
 
-// PASSWORD_RESET_I18N imported from @trek/shared/i18n/externalNotifications
+// PASSWORD_RESET_I18N imported from @marshrutizator/shared/i18n/externalNotifications
 
 function buildPasswordResetHtml(subject: string, strings: PasswordResetStrings, recipient: string, resetUrl: string, lang: string): string {
   const safeGreeting = escapeHtml(`${strings.greeting}, ${recipient}`);

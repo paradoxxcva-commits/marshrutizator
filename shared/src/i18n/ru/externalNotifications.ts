@@ -25,8 +25,8 @@ const ru: NotificationLocale = {
       body: `"${p.todo}" в поездке "${p.trip}" — срок ${p.due}.`,
     }),
     vacay_invite: (p) => ({
-      title: 'Приглашение Vacay Fusion',
-      body: `${p.actor} приглашает вас объединить планы отпуска. Откройте TREK для подтверждения.`,
+      title: 'Приглашение в Календарь',
+      body: `${p.actor} приглашает вас в Календарь отпусков. Откройте Маршрутизатор для подтверждения.`,
     }),
     photos_shared: (p) => ({
       title: `${p.count} фото`,

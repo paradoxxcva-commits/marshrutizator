@@ -6,8 +6,9 @@ import CustomSelect from '../components/shared/CustomSelect'
 import { Globe, MapPin, Briefcase, Calendar, Flag, PanelLeftOpen, PanelLeftClose, X, Star, Plus, Trash2, Search } from 'lucide-react'
 import type { TranslationFn } from '../types'
 import { A2_TO_A3, countryCodeToFlag, type AtlasCountry, type AtlasStats, type AtlasData, type CountryDetail } from './atlas/atlasModel'
-import { continentForCountry } from '@trek/shared'
+import { continentForCountry } from '@marshrutizator/shared'
 import { useAtlas } from './atlas/useAtlas'
+import { AdPlaceholder } from '../components/Ads/AdBlock'
 import AtlasCountrySearch from './atlas/AtlasCountrySearch'
 import { useToast } from '../components/shared/Toast'
 import { getApiErrorMessage } from '../types'
@@ -144,6 +145,11 @@ export default function AtlasPage(): React.ReactElement {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Ad block — top right corner */}
+        <div className="hidden md:block absolute z-10" style={{ top: 'calc(var(--nav-h) + 16px)', right: 16 }}>
+          <AdPlaceholder position="sidebar" />
         </div>
 
         {/* Desktop Panel — bottom center, glass effect */}

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Category } from '@trek/shared';
+import type { Category } from '@marshrutizator/shared';
 import {
   listCategories,
   getCategoryById,

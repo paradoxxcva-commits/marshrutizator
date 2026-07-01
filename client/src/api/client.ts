@@ -41,24 +41,24 @@ import {
   type BookingImportPreviewItem,
   type BookingImportPreviewResponse,
   type BookingImportConfirmResponse,
-} from '@trek/shared'
+} from '@marshrutizator/shared'
 import { getSocketId } from './websocket'
 import { isReachable, probeNow } from '../sync/connectivity'
 
 /**
- * Validate a response payload against its @trek/shared Zod schema — but only in
+ * Validate a response payload against its @marshrutizator/shared Zod schema — but only in
  * dev, and never throwing. A drift between the server contract and the client's
  * expected shape is surfaced as a console warning during development; in
  * production (and on any mismatch) the data passes through untouched, so adding
  * validation can never break a working call. This is the typed-request helper
- * the FE adopts per domain as each backend module lands on @trek/shared.
+ * the FE adopts per domain as each backend module lands on @marshrutizator/shared.
  */
 const API_DEV = Boolean((import.meta as { env?: { DEV?: boolean } }).env?.DEV)
 export function parseInDev<S extends z.ZodTypeAny>(schema: S, data: unknown, label: string): z.infer<S> {
   if (API_DEV) {
     const result = schema.safeParse(data)
     if (!result.success) {
-      console.warn(`[api] ${label}: response did not match the @trek/shared schema`, result.error.issues)
+      console.warn(`[api] ${label}: response did not match the @marshrutizator/shared schema`, result.error.issues)
     }
   }
   return data as z.infer<S>
@@ -75,7 +75,7 @@ function checkInDev<T>(schema: z.ZodTypeAny, data: T, label: string): T {
   if (API_DEV) {
     const result = schema.safeParse(data)
     if (!result.success) {
-      console.warn(`[api] ${label}: response did not match the @trek/shared schema`, result.error.issues)
+      console.warn(`[api] ${label}: response did not match the @marshrutizator/shared schema`, result.error.issues)
     }
   }
   return data
@@ -106,7 +106,7 @@ const RATE_LIMIT_MESSAGES: Record<string, string> = {
 function translateRateLimit(): string {
   const fallback = RATE_LIMIT_MESSAGES['en']!
   try {
-    const lang = localStorage.getItem('app_language') || 'en'
+    const lang = localStorage.getItem('app_language') || 'ru'
     return RATE_LIMIT_MESSAGES[lang] ?? fallback
   } catch {
     return fallback

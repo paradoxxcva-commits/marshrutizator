@@ -25,7 +25,7 @@ export function useJourneyPublic() {
   const [view, setView] = useState<'timeline' | 'gallery' | 'map'>('timeline')
   const [lightbox, setLightbox] = useState<{ photos: { id: string; src: string; caption?: string | null }[]; index: number } | null>(null)
   const [showLangPicker, setShowLangPicker] = useState(false)
-  const locale = useSettingsStore(s => s.settings.language) || 'en'
+  const locale = useSettingsStore(s => s.settings.language) || 'ru'
   const mapRef = useRef<JourneyMapHandle>(null)
   const [activeEntryId, setActiveEntryId] = useState<string | null>(null)
   const [viewingEntry, setViewingEntry] = useState<PublicEntry | null>(null)

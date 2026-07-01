@@ -21,6 +21,7 @@ import {
 import { formatTime, splitReservationDateTime } from '../utils/formatters'
 import { convertDistance, getDistanceUnitLabel } from '../utils/units'
 import { useSettingsStore } from '../store/settingsStore'
+import { AdPlaceholder } from '../components/Ads/AdBlock'
 import '../styles/dashboard.css'
 
 const GRADIENTS = [
@@ -180,6 +181,7 @@ export default function DashboardPage(): React.ReactElement {
             <CurrencyTool />
             <TimezoneTool locale={locale} />
             <UpcomingTool items={upcoming} locale={locale} onOpen={(tripId) => navigate(`/trips/${tripId}`)} />
+            <AdPlaceholder position="sidebar" className="mt-4" />
           </aside>
         </main>
       </div>

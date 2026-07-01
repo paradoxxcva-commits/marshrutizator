@@ -1,6 +1,7 @@
 import React from 'react'
 import { Settings, Palette, Map, Bell, Plug, CloudOff, User, Info } from 'lucide-react'
 import { useTranslation } from '../i18n'
+import { AdPlaceholder } from '../components/Ads/AdBlock'
 import PageShell from '../components/Layout/PageShell'
 import PageSidebar, { type PageSidebarTab } from '../components/Layout/PageSidebar'
 import DisplaySettingsTab from '../components/Settings/DisplaySettingsTab'
@@ -61,6 +62,11 @@ export default function SettingsPage(): React.ReactElement {
             {activeTab === 'account' && <AccountTab />}
             {activeTab === 'about' && appVersion && <AboutTab appVersion={appVersion} />}
           </PageSidebar>
+
+          {/* Ad block — bottom of settings */}
+          <div className="mt-6">
+            <AdPlaceholder position="inline" />
+          </div>
         </div>
     </PageShell>
   )

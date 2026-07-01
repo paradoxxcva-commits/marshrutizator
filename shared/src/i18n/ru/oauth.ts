@@ -3,7 +3,7 @@ import type { TranslationStrings } from '../types';
 const oauth: TranslationStrings = {
   'oauth.scope.group.trips': 'Поездки',
   'oauth.scope.group.places': 'Места',
-  'oauth.scope.group.atlas': 'Atlas',
+  'oauth.scope.group.atlas': 'Атлас',
   'oauth.scope.group.packing': 'Вещи',
   'oauth.scope.group.todos': 'Задачи',
   'oauth.scope.group.budget': 'Бюджет',

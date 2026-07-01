@@ -91,7 +91,7 @@ COPY server/tsconfig.json ./server/
 COPY server/scripts/migrate-encryption.ts ./server/scripts/migrate-encryption.ts
 COPY --from=shared-builder /app/shared/dist ./shared/dist
 COPY --from=client-builder /app/client/dist ./server/public
-COPY --from=client-builder /app/client/public/fonts ./server/public/fonts
+COPY --from=client-builder /app/client/public/ ./server/public/
 
 RUN mkdir -p /app/data/logs /app/uploads/files /app/uploads/covers /app/uploads/avatars /app/uploads/photos && \
     ln -s /app/uploads /app/server/uploads && \
