@@ -15,16 +15,12 @@ export function AdBlock({ blockId, format = 'horizontal', className = '' }: AdBl
 
   useEffect(() => {
     if (!containerRef.current || !blockId) return
-
-    // Clear previous ad
     containerRef.current.innerHTML = ''
 
-    // Create ad container
     const adDiv = document.createElement('div')
     adDiv.id = `yandex_ad_${blockId}`
     containerRef.current.appendChild(adDiv)
 
-    // Load Yandex Ads script if not already loaded
     if (!document.querySelector('script[src*="an.yandex.ru"]')) {
       const script = document.createElement('script')
       script.src = '//an.yandex.ru/system/context.js'
@@ -32,7 +28,6 @@ export function AdBlock({ blockId, format = 'horizontal', className = '' }: AdBl
       document.head.appendChild(script)
     }
 
-    // Render ad
     if (typeof window !== 'undefined' && (window as any).Ya && (window as any).Ya.Context) {
       try {
         (window as any).Ya.Context.AdvManager.render({
@@ -40,47 +35,61 @@ export function AdBlock({ blockId, format = 'horizontal', className = '' }: AdBl
           type: 'yandex_rtb',
           test: false,
         })
-      } catch (e) {
-        // Ad not ready yet or blocked
-      }
+      } catch (e) { /* Ad not ready */ }
     }
 
-    return () => {
-      if (containerRef.current) {
-        containerRef.current.innerHTML = ''
-      }
-    }
+    return () => { if (containerRef.current) containerRef.current.innerHTML = '' }
   }, [blockId])
 
-  const sizeClass = format === 'horizontal'
-    ? 'min-h-[100px] max-w-[728px]'
-    : format === 'vertical'
-    ? 'min-h-[250px] max-w-[300px]'
-    : 'min-h-[90px] max-w-[600px]'
-
-  return (
-    <div
-      ref={containerRef}
-      className={`ad-block ${sizeClass} mx-auto ${className}`}
-      data-ad-slot={blockId}
-    />
-  )
+  return <div ref={containerRef} className={className} data-ad-slot={blockId} />
 }
 
 /**
- * Placeholder for ad blocks - shows when no blockId is configured.
- * Replace with real AdBlock when you get the block ID from РСЯ.
+ * Placeholder for ad blocks with size preview and border.
+ * Replace with real AdBlock when block ID from РСЯ is ready.
  */
 export function AdPlaceholder({ position = 'inline', className = '' }: { position?: string; className?: string }) {
-  const sizeClass = position === 'sidebar'
-    ? 'min-h-[250px] max-w-[300px]'
-    : position === 'header'
-    ? 'min-h-[90px] max-w-[728px]'
-    : 'min-h-[100px] max-w-[600px]'
+  const sizes: Record<string, { w: string; h: string; label: string }> = {
+    sidebar:  { w: '100%', h: '250px', label: '300×250' },
+    header:   { w: '728px', h: '90px',  label: '728×90' },
+    inline:   { w: '600px', h: '100px', label: '600×100' },
+    mobile:   { w: '320px', h: '50px',  label: '320×50' },
+  }
+
+  const size = sizes[position] || sizes.inline
 
   return (
-    <div className={`ad-block ad-placeholder ${sizeClass} mx-auto flex items-center justify-center rounded-lg border border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 ${className}`}>
-      <span className="text-xs text-gray-400 dark:text-gray-500">Рекламный блок</span>
+    <div
+      className={`relative flex items-center justify-center rounded-lg ${className}`}
+      style={{
+        width: '100%',
+        maxWidth: size.w,
+        minHeight: size.h,
+        border: '2px dashed rgba(99,102,241,0.4)',
+        background: 'rgba(99,102,241,0.04)',
+      }}
+    >
+      {/* Size label */}
+      <div
+        className="absolute -top-3 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded text-[10px] font-medium tracking-wide"
+        style={{
+          background: 'rgba(99,102,241,0.1)',
+          border: '1px solid rgba(99,102,241,0.25)',
+          color: 'rgba(99,102,241,0.8)',
+        }}
+      >
+        {size.label}
+      </div>
+
+      {/* Center content */}
+      <div className="text-center px-4">
+        <div className="text-xs font-medium" style={{ color: 'rgba(99,102,241,0.6)' }}>
+          Рекламный баннер
+        </div>
+        <div className="text-[10px] mt-1" style={{ color: 'rgba(99,102,241,0.4)' }}>
+          Заменить на AdBlock с blockId из РСЯ
+        </div>
+      </div>
     </div>
   )
 }

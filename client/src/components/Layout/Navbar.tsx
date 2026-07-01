@@ -118,9 +118,9 @@ export default function Navbar({ tripTitle, tripId, onBack, showBack, onShare }:
           </button>
         )}
 
-        <Link to="/dashboard" className="flex items-center transition-colors flex-shrink-0">
-          <img src={dark ? '/icons/icon-white.svg' : '/icons/icon-dark.svg'} alt="TREK" className="sm:hidden" style={{ height: 22, width: 22 }} />
-          <img src={dark ? '/logo-light.svg' : '/logo-dark.svg'} alt="TREK" className="hidden sm:block" style={{ height: 28 }} />
+        <Link to="/dashboard" className="flex items-center gap-2 transition-colors flex-shrink-0">
+          <img src="/icons/favicon.svg" alt="Маршрутизатор" style={{ height: 30, width: 30 }} />
+          <span className="hidden sm:inline text-sm font-semibold text-content" style={{ letterSpacing: 1 }}>Маршрутизатор</span>
         </Link>
 
         {tripTitle && (

@@ -101,10 +101,11 @@ export default function LoginPage(): React.ReactElement {
         {/* Logo fade in + burst */}
         <div className="takeoff-logo" style={{
           position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
         }}>
-          <img src="/logo-light.svg" alt="Маршрутизатор" style={{ height: 72 }} />
-          <p style={{ margin: 0, fontSize: 20, color: 'rgba(255,255,255,0.6)', fontFamily: "'MuseoModerno', sans-serif", textTransform: 'lowercase', whiteSpace: 'nowrap' }}>{t('login.tagline')}</p>
+          <img src="/icons/favicon-lunar.svg" alt="Маршрутизатор" style={{ width: 160, maxWidth: '40vw' }} />
+          <h1 style={{ margin: 0, fontSize: 32, fontWeight: 700, color: '#ffffff', fontFamily: "'MuseoModerno', sans-serif", letterSpacing: 6, whiteSpace: 'nowrap', textShadow: '0 0 30px rgba(74, 155, 217, 0.4)' }}>МАРШРУТИЗАТОР</h1>
+          <p style={{ margin: 0, fontSize: 16, color: 'rgba(255,255,255,0.5)', fontFamily: "'MuseoModerno', sans-serif", textTransform: 'lowercase', whiteSpace: 'nowrap' }}>{t('login.tagline')}</p>
         </div>
 
 
@@ -270,10 +271,10 @@ export default function LoginPage(): React.ReactElement {
         <div className="login-orb1" style={{ position: 'absolute', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 70%)', filter: 'blur(80px)' }} />
         <div className="login-orb2" style={{ position: 'absolute', width: 350, height: 350, borderRadius: '50%', background: 'radial-gradient(circle, rgba(14,165,233,0.08) 0%, transparent 70%)', filter: 'blur(60px)' }} />
 
-        {/* Animated planes — realistic silhouettes at different sizes/speeds */}
+        {/* Animated planes — white, distinct, with glow */}
         <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
           {/* Plane 1 — large, slow, foreground */}
-          <svg className="login-plane1" viewBox="0 0 480 120" style={{ position: 'absolute', width: 48, opacity: 0.12 }}>
+          <svg className="login-plane1" viewBox="0 0 480 120" style={{ position: 'absolute', width: 48, opacity: 0.35, filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.4))' }}>
             <g fill="white" transform="translate(240,60) rotate(-12)">
               <ellipse cx="0" cy="0" rx="120" ry="12" />
               <path d="M-20,-10 L-60,-55 L-40,-55 L0,-15 Z" />
@@ -285,7 +286,7 @@ export default function LoginPage(): React.ReactElement {
           </svg>
 
           {/* Plane 2 — small, faster, higher */}
-          <svg className="login-plane2" viewBox="0 0 480 120" style={{ position: 'absolute', width: 24, opacity: 0.08 }}>
+          <svg className="login-plane2" viewBox="0 0 480 120" style={{ position: 'absolute', width: 24, opacity: 0.25, filter: 'drop-shadow(0 0 4px rgba(255,255,255,0.3))' }}>
             <g fill="white" transform="translate(240,60) rotate(-12)">
               <ellipse cx="0" cy="0" rx="120" ry="12" />
               <path d="M-20,-10 L-60,-55 L-40,-55 L0,-15 Z" />
@@ -295,7 +296,7 @@ export default function LoginPage(): React.ReactElement {
           </svg>
 
           {/* Plane 3 — medium, mid-speed */}
-          <svg className="login-plane3" viewBox="0 0 480 120" style={{ position: 'absolute', width: 32, opacity: 0.06 }}>
+          <svg className="login-plane3" viewBox="0 0 480 120" style={{ position: 'absolute', width: 32, opacity: 0.2, filter: 'drop-shadow(0 0 5px rgba(255,255,255,0.25))' }}>
             <g fill="white" transform="translate(240,60) rotate(-5)">
               <ellipse cx="0" cy="0" rx="120" ry="12" />
               <path d="M-20,-10 L-60,-55 L-40,-55 L0,-15 Z" />
@@ -307,7 +308,7 @@ export default function LoginPage(): React.ReactElement {
           </svg>
 
           {/* Plane 4 — tiny, fast, high */}
-          <svg className="login-plane4" viewBox="0 0 480 120" style={{ position: 'absolute', width: 16, opacity: 0.07 }}>
+          <svg className="login-plane4" viewBox="0 0 480 120" style={{ position: 'absolute', width: 16, opacity: 0.2, filter: 'drop-shadow(0 0 3px rgba(255,255,255,0.25))' }}>
             <g fill="white" transform="translate(240,60) rotate(-10)">
               <ellipse cx="0" cy="0" rx="120" ry="12" />
               <path d="M-20,-10 L-60,-55 L-40,-55 L0,-15 Z" />
@@ -317,7 +318,7 @@ export default function LoginPage(): React.ReactElement {
           </svg>
 
           {/* Plane 5 — medium, right to left, lower */}
-          <svg className="login-plane5" viewBox="0 0 480 120" style={{ position: 'absolute', width: 28, opacity: 0.05 }}>
+          <svg className="login-plane5" viewBox="0 0 480 120" style={{ position: 'absolute', width: 28, opacity: 0.18, filter: 'drop-shadow(0 0 4px rgba(255,255,255,0.2))' }}>
             <g fill="white" transform="translate(240,60) rotate(8) scale(-1,1)">
               <ellipse cx="0" cy="0" rx="120" ry="12" />
               <path d="M-20,-10 L-60,-55 L-40,-55 L0,-15 Z" />
@@ -329,7 +330,7 @@ export default function LoginPage(): React.ReactElement {
           </svg>
 
           {/* Plane 6 — tiny distant */}
-          <svg className="login-plane6" viewBox="0 0 480 120" style={{ position: 'absolute', width: 12, opacity: 0.04 }}>
+          <svg className="login-plane6" viewBox="0 0 480 120" style={{ position: 'absolute', width: 12, opacity: 0.15, filter: 'drop-shadow(0 0 3px rgba(255,255,255,0.2))' }}>
             <g fill="white" transform="translate(240,60) rotate(-15)">
               <ellipse cx="0" cy="0" rx="120" ry="12" />
               <path d="M-20,-10 L-60,-55 L-40,-55 L0,-15 Z" />
@@ -342,8 +343,9 @@ export default function LoginPage(): React.ReactElement {
 
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 560, textAlign: 'center' }}>
           {/* Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 48 }}>
-            <img src="/logo-light.svg" alt="Маршрутизатор" style={{ height: 64 }} />
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginBottom: 48, gap: 12 }}>
+            <img src="/icons/favicon-lunar.svg" alt="Маршрутизатор" style={{ width: 120, maxWidth: '30vw' }} />
+            <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, color: '#ffffff', fontFamily: "'MuseoModerno', sans-serif", letterSpacing: 5, textShadow: '0 0 20px rgba(74, 155, 217, 0.3)' }}>МАРШРУТИЗАТОР</h1>
           </div>
 
           <h2 style={{ margin: '0 0 12px', fontSize: 36, fontWeight: 700, color: 'white', lineHeight: 1.15, letterSpacing: '-0.02em', fontFamily: "'MuseoModerno', sans-serif", textTransform: 'lowercase' }}>
@@ -385,11 +387,12 @@ export default function LoginPage(): React.ReactElement {
         <div style={{ width: '100%', maxWidth: 400 }}>
 
           {/* Mobile logo */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, marginBottom: 36 }}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginBottom: 36 }}
             className="mobile-logo">
             <style>{`@media(min-width:1024px){.mobile-logo{display:none!important}}`}</style>
-            <img src="/logo-dark.svg" alt="Маршрутизатор" style={{ height: 48 }} />
-            <p style={{ margin: 0, fontSize: 16, color: '#9ca3af', fontFamily: "'MuseoModerno', sans-serif", textTransform: 'lowercase', whiteSpace: 'nowrap' }}>{t('login.tagline')}</p>
+            <img src="/icons/favicon-lunar.svg" alt="Маршрутизатор" style={{ width: 100, maxWidth: '25vw' }} />
+            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: '#1a2332', fontFamily: "'MuseoModerno', sans-serif", letterSpacing: 4 }}>МАРШРУТИЗАТОР</h1>
+            <p style={{ margin: 0, fontSize: 14, color: '#9ca3af', fontFamily: "'MuseoModerno', sans-serif", textTransform: 'lowercase', whiteSpace: 'nowrap' }}>{t('login.tagline')}</p>
           </div>
 
           <div style={{ background: 'white', borderRadius: 20, border: '1px solid #e5e7eb', padding: '36px 32px', boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }}>

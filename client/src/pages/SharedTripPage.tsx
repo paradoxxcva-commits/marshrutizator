@@ -85,7 +85,7 @@ export default function SharedTripPage() {
 
         {/* Logo */}
         <div className="bg-[rgba(255,255,255,0.08)]" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, borderRadius: 12, backdropFilter: 'blur(8px)', marginBottom: 12, border: '1px solid rgba(255,255,255,0.1)' }}>
-          <img src="/icons/icon-white.svg" alt="Маршрутизатор" width="26" height="26" />
+          <img src="/icons/favicon.svg" alt="Маршрутизатор" width="26" height="26" />
         </div>
 
         <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: 3, textTransform: 'uppercase', opacity: 0.35, marginBottom: 12 }}>Travel Resource & Exploration Kit</div>

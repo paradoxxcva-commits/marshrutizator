@@ -1,0 +1,36 @@
+# GitHub доступ для Marshrutizator
+
+## Репозиторий
+https://github.com/paradoxxcva-commits/marshrutizator
+
+## Способ пуша через Personal Access Token
+
+1. Создайте токен: https://github.com/settings/tokens
+   - Права: repo (полный доступ к репозиториям)
+
+2. Выполните команду (замените <TOKEN> на ваш токен):
+```bash
+cd /data/marshrutizator
+git remote set-url origin https://<TOKEN>@github.com/paradoxxcva-commits/marshrutizator.git
+git push origin main
+```
+
+## Данные для входа в приложение
+- URL: https://marshrutizator.su
+- Email: admin@marshrutizator.su
+- Пароль: admin123
+
+## Данные для сервера
+- .env путь: /data/marshrutizator/.env
+- Docker образ: marshrutizator-app
+- Контейнер: marshrutizator
+- Порт: 3000 (внутри контейнера)
+
+## Управление
+```bash
+cd /data/marshrutizator
+docker compose down       # остановить
+docker compose up -d      # запустить
+docker compose logs -f    # логи
+bash redeploy.sh          # безопасный редеплой
+```
