@@ -5,8 +5,8 @@ describe('validatePassword', () => {
   // AUTH-006 — Registration with weak password
   describe('length requirement', () => {
     it('AUTH-006: rejects passwords shorter than 8 characters', () => {
-      expect(validatePassword('Ab1!')).toEqual({ ok: false, reason: expect.stringContaining('8 characters') });
-      expect(validatePassword('Ab1!456')).toEqual({ ok: false, reason: expect.stringContaining('8 characters') });
+      expect(validatePassword('Ab1!')).toEqual({ ok: false, reason: expect.stringContaining('8 символов') });
+      expect(validatePassword('Ab1!456')).toEqual({ ok: false, reason: expect.stringContaining('8 символов') });
     });
 
     it('accepts passwords of exactly 8 characters that meet all requirements', () => {
@@ -18,26 +18,26 @@ describe('validatePassword', () => {
     it('AUTH-006: rejects password missing uppercase letter', () => {
       const result = validatePassword('abcd1234!');
       expect(result.ok).toBe(false);
-      expect(result.reason).toContain('uppercase');
+      expect(result.reason).toContain('заглавную');
     });
 
     it('AUTH-006: rejects password missing lowercase letter', () => {
       const result = validatePassword('ABCD1234!');
       expect(result.ok).toBe(false);
-      expect(result.reason).toContain('lowercase');
+      expect(result.reason).toContain('строчную');
     });
 
     it('AUTH-006: rejects password missing a number', () => {
       const result = validatePassword('Abcdefg!');
       expect(result.ok).toBe(false);
-      expect(result.reason).toContain('number');
+      expect(result.reason).toContain('цифру');
     });
 
     it('AUTH-006: rejects password missing a special character', () => {
       // 'TrekApp1' — has upper, lower, number, NO special char, NOT in blocklist
       const result = validatePassword('TrekApp1');
       expect(result.ok).toBe(false);
-      expect(result.reason).toContain('special character');
+      expect(result.reason).toContain('спецсимвол');
     });
   });
 
@@ -64,7 +64,7 @@ describe('validatePassword', () => {
       // 'Password1' lowercased = 'password1' → in blocklist! ✓ (length ok, not repetitive)
       expect(validatePassword('Password1')).toEqual({
         ok: false,
-        reason: expect.stringContaining('common'),
+        reason: expect.stringContaining('распространён'),
       });
     });
 
@@ -72,7 +72,7 @@ describe('validatePassword', () => {
       // 'changeme' is in the set; 'Changeme'.toLowerCase() === 'changeme' ✓
       expect(validatePassword('Changeme')).toEqual({
         ok: false,
-        reason: expect.stringContaining('common'),
+        reason: expect.stringContaining('распространён'),
       });
     });
 
@@ -85,7 +85,7 @@ describe('validatePassword', () => {
     it('rejects passwords made of a single repeated character', () => {
       const result = validatePassword('AAAAAAAA');
       expect(result.ok).toBe(false);
-      expect(result.reason).toContain('repetitive');
+      expect(result.reason).toContain('повторяющийся');
     });
   });
 

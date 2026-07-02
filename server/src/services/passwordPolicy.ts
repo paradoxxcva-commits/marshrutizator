@@ -8,17 +8,17 @@ const COMMON_PASSWORDS = new Set([
 ]);
 
 export function validatePassword(password: string): { ok: boolean; reason?: string } {
-  if (password.length < 8) return { ok: false, reason: 'Password must be at least 8 characters' };
+  if (password.length < 8) return { ok: false, reason: 'Пароль должен содержать не менее 8 символов' };
 
   if (/^(.)\1+$/.test(password)) {
-    return { ok: false, reason: 'Password is too repetitive' };
+    return { ok: false, reason: 'Пароль слишком повторяющийся' };
   }
 
   if (COMMON_PASSWORDS.has(password.toLowerCase())) {
-    return { ok: false, reason: 'Password is too common. Please choose a unique password.' };
+    return { ok: false, reason: 'Пароль слишком распространён. Выберите уникальный пароль.' };
   }
 
-  const requirementsMessage = 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character';
+  const requirementsMessage = 'Пароль должен содержать хотя бы одну заглавную букву, одну строчную букву, одну цифру и один спецсимвол';
   if (!/[A-Z]/.test(password)) return { ok: false, reason: requirementsMessage };
   if (!/[a-z]/.test(password)) return { ok: false, reason: requirementsMessage };
   if (!/[0-9]/.test(password)) return { ok: false, reason: requirementsMessage };
