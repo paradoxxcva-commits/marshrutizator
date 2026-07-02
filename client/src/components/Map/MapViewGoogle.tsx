@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { useSettingsStore } from '../../store/settingsStore'
+import { useAuthStore } from '../../store/authStore'
 import type { Place } from '../../types'
 
 declare global {
@@ -66,7 +67,7 @@ export default function MapViewGoogle({
   const mapRef = useRef<any>(null)
   const markersRef = useRef<Map<number, any>>(new Map())
   const routeLineRef = useRef<any>(null)
-  const apiKey = useSettingsStore(s => s.settings.maps_api_key || '')
+  const apiKey = useAuthStore(s => s.user?.maps_api_key || '')
   const mapLang = useSettingsStore(s => s.settings.language)
 
   // Initialize map
