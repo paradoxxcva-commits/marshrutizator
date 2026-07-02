@@ -33,7 +33,7 @@ const VALID_VALUES: Partial<Record<DefaultableKey, unknown[]>> = {
   distance_unit: ['metric', 'imperial'],
   time_format: ['12h', '24h'],
   dark_mode: [true, false, 'light', 'dark', 'auto'],
-  map_provider: ['leaflet', 'mapbox-gl', 'maplibre-gl'],
+  map_provider: ['leaflet', 'mapbox-gl', 'maplibre-gl', 'google-maps'],
 };
 
 const BOOLEAN_KEYS = new Set<DefaultableKey>(['blur_booking_codes', 'mapbox_3d_enabled', 'mapbox_quality_mode']);

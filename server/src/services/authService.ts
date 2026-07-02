@@ -16,6 +16,7 @@ import { createEphemeralToken } from './ephemeralTokens';
 import { revokeUserSessions } from '../mcp';
 import { startTripReminders } from '../scheduler';
 import { deleteUserCompletely } from './userCleanupService';
+import { getUserSettings } from './settingsService';
 import { getFlightDistanceKm } from './distanceService';
 import { verifyJwtAndLoadUser } from '../middleware/auth';
 import { sendWelcomeEmail } from './notifications';
@@ -696,15 +697,14 @@ export function getSettings(userId: number): { error?: string; status?: number; 
   const user = db.prepare(
     'SELECT role, maps_api_key, openweather_api_key FROM users WHERE id = ?'
   ).get(userId) as Pick<User, 'role' | 'maps_api_key' | 'openweather_api_key'> | undefined;
-  if (user?.role !== 'admin') {
-    // Non-admin: return only maps_api_key (for Google Maps provider)
-    return { settings: { maps_api_key: decrypt_api_key(user?.maps_api_key) } };
-  }
 
+  // Return user settings (from settings table + admin defaults) plus API keys
+  const userSettings = getUserSettings(userId);
   return {
     settings: {
-      maps_api_key: decrypt_api_key(user.maps_api_key),
-      openweather_api_key: decrypt_api_key(user.openweather_api_key),
+      ...userSettings,
+      maps_api_key: decrypt_api_key(user?.maps_api_key),
+      openweather_api_key: user?.role === 'admin' ? decrypt_api_key(user.openweather_api_key) : undefined,
     },
   };
 }
