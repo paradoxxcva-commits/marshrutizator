@@ -5,6 +5,7 @@ import { useSettingsStore } from '../../store/settingsStore'
 import { useToast } from '../shared/Toast'
 import CustomSelect from '../shared/CustomSelect'
 import { MapViewGL } from '../Map/MapViewGL'
+import MapViewGoogle from '../Map/MapViewGoogle'
 import GlMapPreview from './MapboxPreview'
 import Section from './Section'
 import ToggleSwitch from './ToggleSwitch'
@@ -13,6 +14,7 @@ import {
   MAPBOX_DEFAULT_STYLE,
   defaultStyleForProvider,
   getStylePresets,
+  type GlMapProvider,
   isOpenFreeMapStyle,
   normalizeStyleForProvider,
   type GlMapProvider,
