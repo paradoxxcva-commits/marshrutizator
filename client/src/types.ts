@@ -118,8 +118,9 @@ export interface Settings {
   map_booking_labels?: boolean
   map_poi_pill_enabled?: boolean
   optimize_from_accommodation?: boolean
-  map_provider?: 'mapbox-gl' | 'maplibre-gl'
+  map_provider?: 'mapbox-gl' | 'maplibre-gl' | 'google-maps'
   mapbox_access_token?: string
+  maps_api_key?: string
   mapbox_style?: string
   maplibre_style?: string
   mapbox_3d_enabled?: boolean

@@ -66,7 +66,7 @@ export default function MapViewGoogle({
   const mapRef = useRef<any>(null)
   const markersRef = useRef<Map<number, any>>(new Map())
   const routeLineRef = useRef<any>(null)
-  const apiKey = useSettingsStore(s => s.settings.mapbox_access_token || '')
+  const apiKey = useSettingsStore(s => s.settings.maps_api_key || '')
   const mapLang = useSettingsStore(s => s.settings.language)
 
   // Initialize map

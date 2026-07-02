@@ -696,7 +696,10 @@ export function getSettings(userId: number): { error?: string; status?: number; 
   const user = db.prepare(
     'SELECT role, maps_api_key, openweather_api_key FROM users WHERE id = ?'
   ).get(userId) as Pick<User, 'role' | 'maps_api_key' | 'openweather_api_key'> | undefined;
-  if (user?.role !== 'admin') return { error: 'Admin access required', status: 403 };
+  if (user?.role !== 'admin') {
+    // Non-admin: return only maps_api_key (for Google Maps provider)
+    return { settings: { maps_api_key: decrypt_api_key(user?.maps_api_key) } };
+  }
 
   return {
     settings: {

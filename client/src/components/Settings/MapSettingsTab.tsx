@@ -302,8 +302,8 @@ export default function MapSettingsTab(): React.ReactElement {
         </p>
       </div>
 
-      {/* GL settings */}
-      {provider && (
+      {/* GL settings — hidden for Google Maps */}
+      {provider && provider !== 'google-maps' && (
         <div className="space-y-3">
           {provider === 'mapbox-gl' && (
           <div>
