@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { Map, Save, Layers, Box, ChevronDown, Check, Globe2 } from 'lucide-react'
+import { Map, Save, Layers, Box, ChevronDown, Check, Globe2, MapPin } from 'lucide-react'
 import { useTranslation } from '../../i18n'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useToast } from '../shared/Toast'
@@ -124,10 +124,10 @@ function StyleDropdown({ value, provider, onChange }: { value: string; provider:
   )
 }
 
-type Provider = GlMapProvider
+type Provider = GlMapProvider | 'google-maps'
 
 function normalizeProvider(value: unknown): Provider {
-  return value === 'mapbox-gl' || value === 'maplibre-gl' ? value : 'maplibre-gl'
+  return value === 'mapbox-gl' || value === 'maplibre-gl' || value === 'google-maps' ? value : 'maplibre-gl'
 }
 
 function styleForProvider(provider: Provider, style?: string | null): string {
@@ -200,7 +200,7 @@ export default function MapSettingsTab(): React.ReactElement {
       const glStyle = normalizeStyleForProvider(provider, mapboxStyle)
       setMapboxStyle(glStyle)
       // Save into the active provider's own slot so the other provider's style survives.
-      const stylePatch = provider === 'maplibre-gl' ? { maplibre_style: glStyle } : { mapbox_style: glStyle }
+      const stylePatch = provider === 'google-maps' ? {} : provider === 'maplibre-gl' ? { maplibre_style: glStyle } : { mapbox_style: glStyle }
       await updateSettings({
         map_provider: provider,
         map_tile_url: mapTileUrl,
@@ -275,6 +275,24 @@ export default function MapSettingsTab(): React.ReactElement {
             <span className="hidden sm:inline-block absolute top-2 right-2 text-[9px] font-semibold tracking-wide uppercase px-1.5 py-[3px] rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 leading-none">
               {t('settings.mapExperimental')}
             </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => changeProvider('google-maps')}
+            className={`relative flex items-start gap-3 p-3 rounded-lg border text-left transition-colors ${
+              provider === 'google-maps'
+                ? 'border-slate-900 bg-slate-50 dark:bg-slate-800 dark:border-slate-200'
+                : 'border-slate-200 hover:border-slate-400 dark:border-slate-700'
+            }`}
+          >
+            <MapPin size={18} className="mt-0.5 flex-shrink-0 text-slate-700 dark:text-slate-300" />
+            <div className="min-w-0">
+              <div className="text-sm font-medium text-slate-900 dark:text-white">
+                <span className="sm:hidden">Google</span>
+                <span className="hidden sm:inline">Google Maps</span>
+              </div>
+              <div className="hidden sm:block text-xs text-slate-500 mt-0.5">{t('settings.mapGoogleSubtitle')}</div>
+            </div>
           </button>
         </div>
         <p className="text-xs text-slate-400 mt-2">
@@ -390,7 +408,15 @@ export default function MapSettingsTab(): React.ReactElement {
 
       <div>
         <div style={{ position: 'relative', inset: 0, height: '200px', width: '100%' }}>
-          {provider ? (
+          {provider === 'google-maps' ? (
+            <MapViewGoogle
+              places={mapPlaces}
+              center={[parseFloat(String(defaultLat)) || 55.7558, parseFloat(String(defaultLng)) || 37.6173]}
+              zoom={Math.max(parseInt(String(defaultZoom)) || 10, 12)}
+              onMapClick={(lat, lng) => { setDefaultLat(lat); setDefaultLng(lng) }}
+              className="rounded-lg"
+            />
+          ) : provider ? (
             <GlMapPreview
               provider={provider}
               token={mapboxToken}

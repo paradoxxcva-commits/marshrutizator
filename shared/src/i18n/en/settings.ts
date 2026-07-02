@@ -21,6 +21,7 @@ const settings: TranslationStrings = {
   'settings.mapLeafletSubtitle': 'Classic 2D, any raster tiles',
   'settings.mapMapboxSubtitle': 'Vector tiles, 3D buildings & terrain',
   'settings.mapMapLibreSubtitle': 'OpenFreeMap vector tiles, no token',
+  'settings.mapGoogleSubtitle': 'Google Maps API, requires key',
   'settings.mapExperimental': 'Experimental',
   'settings.mapMapboxToken': 'Mapbox Access Token',
   'settings.mapMapboxTokenHint': 'Public token (pk.*) from',

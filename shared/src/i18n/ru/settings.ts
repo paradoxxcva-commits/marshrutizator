@@ -21,6 +21,7 @@ const settings: TranslationStrings = {
   'settings.mapLeafletSubtitle': 'Классические 2D, любые растровые тайлы',
   'settings.mapMapboxSubtitle': 'Векторные тайлы, 3D-здания и рельеф',
   'settings.mapMapLibreSubtitle': 'Векторные тайлы OpenFreeMap, без токена',
+  'settings.mapGoogleSubtitle': 'Google Maps API, требует ключ',
   'settings.mapExperimental': 'Экспериментально',
   'settings.mapMapboxToken': 'Токен доступа Mapbox',
   'settings.mapMapboxTokenHint': 'Публичный токен (pk.*) с',
