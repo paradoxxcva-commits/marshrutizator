@@ -114,10 +114,10 @@ export function createUser(data: { username: string; email: string; password: st
   };
 }
 
-export function updateUser(id: string, data: { username?: string; email?: string; role?: string; password?: string }) {
+export function updateUser(id: string, data: { username?: string; email?: string; role?: string; password?: string; maps_api_key?: string | null }) {
   const username = typeof data.username === 'string' ? data.username.trim() : data.username;
   const email = typeof data.email === 'string' ? data.email.trim() : data.email;
-  const { role, password } = data;
+  const { role, password, maps_api_key } = data;
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(id) as User | undefined;
 
   if (!user) return { error: 'User not found', status: 404 };
@@ -157,9 +157,10 @@ export function updateUser(id: string, data: { username?: string; email?: string
       email = COALESCE(?, email),
       role = COALESCE(?, role),
       password_hash = COALESCE(?, password_hash),
+      maps_api_key = COALESCE(?, maps_api_key),
       updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
-  `).run(username || null, email || null, role || null, passwordHash, id);
+  `).run(username || null, email || null, role || null, passwordHash, maps_api_key !== undefined ? maybe_encrypt_api_key(maps_api_key) : null, id);
 
   const updated = db.prepare(
     'SELECT id, username, email, role, created_at, updated_at FROM users WHERE id = ?'
