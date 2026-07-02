@@ -78,7 +78,7 @@ export class AuthController {
 
   @Put('me/password')
   changePassword(@CurrentUser() user: User, @Body() body: unknown, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    this.limit('login', req, 5);
+    this.limit('password_change', req, 10);
     const result = this.auth.changePassword(user.id, user.email, body);
     if (result.error) {
       throw new HttpException({ error: result.error }, result.status!);
