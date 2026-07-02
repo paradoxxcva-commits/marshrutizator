@@ -21,6 +21,15 @@ export interface PasswordResetStrings {
   ignore: string;
 }
 
+export interface WelcomeStrings {
+  subject: string;
+  greeting: string;
+  body: string;
+  features: string[];
+  ctaIntro: string;
+  signoff: string;
+}
+
 export type NotificationEventKey =
   | 'trip_invite'
   | 'booking_change'
@@ -37,4 +46,5 @@ export interface NotificationLocale {
   email: EmailStrings;
   events: Record<NotificationEventKey, EventTextFn>;
   passwordReset: PasswordResetStrings;
+  welcome: WelcomeStrings;
 }

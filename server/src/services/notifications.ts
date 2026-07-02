@@ -7,8 +7,8 @@ import { checkSsrf, createPinnedDispatcher } from '../utils/ssrfGuard';
 // ── Types ──────────────────────────────────────────────────────────────────
 
 import type { NotifEventType } from './notificationPreferencesService';
-import { EMAIL_I18N as I18N, EVENT_TEXTS, PASSWORD_RESET_I18N } from '@marshrutizator/shared/i18n/externalNotifications';
-import type { EmailStrings, EventText, PasswordResetStrings, NotificationEventKey } from '@marshrutizator/shared/i18n/externalNotifications';
+import { EMAIL_I18N as I18N, EVENT_TEXTS, PASSWORD_RESET_I18N, WELCOME_I18N } from '@marshrutizator/shared/i18n/externalNotifications';
+import type { EmailStrings, EventText, PasswordResetStrings, WelcomeStrings, NotificationEventKey } from '@marshrutizator/shared/i18n/externalNotifications';
 
 // Compile-time guard: shared NotificationEventKey and server NotifEventType must stay in sync.
 type _EvtFwd = NotifEventType extends NotificationEventKey ? true : never
@@ -245,6 +245,59 @@ export async function sendPasswordResetEmail(
   } catch (err) {
     logError(`Password reset email failed to=${to}: ${err instanceof Error ? err.message : err}`);
     return { delivered: 'failed' };
+  }
+}
+
+// ── Welcome email ──────────────────────────────────────────────────────────
+
+function buildWelcomeHtml(strings: WelcomeStrings, lang: string): string {
+  const safeGreeting = escapeHtml(strings.greeting);
+  const safeBody = escapeHtml(strings.body);
+  const safeCta = escapeHtml(strings.ctaIntro);
+  const safeSignoff = escapeHtml(strings.signoff);
+  const featuresHtml = strings.features.map(f => `<li style="margin:6px 0;font-size:14px;color:#374151;line-height:1.6;">${escapeHtml(f)}</li>`).join('');
+  const block = `
+    <p style="margin:0 0 16px 0;font-size:16px;">${safeGreeting}</p>
+    <p style="margin:0 0 20px 0;font-size:14px;color:#4b5563;line-height:1.7;white-space:pre-wrap;">${safeBody}</p>
+    <ul style="margin:0 0 20px 0;padding-left:20px;">${featuresHtml}</ul>
+    <p style="margin:0 0 20px 0;font-size:14px;color:#4b5563;line-height:1.7;">${safeCta}</p>
+    <p style="margin:0;font-size:14px;color:#4b5563;line-height:1.7;white-space:pre-wrap;">${safeSignoff}</p>
+  `;
+  return buildEmailHtml(strings.subject, block, lang, '/', true);
+}
+
+export async function sendWelcomeEmail(
+  to: string,
+  username: string,
+  lang: string,
+): Promise<void> {
+  const strings = WELCOME_I18N[lang] || WELCOME_I18N.en;
+  const config = getSmtpConfig();
+  if (!config) {
+    logInfo(`Welcome email skipped (no SMTP) for=${to}`);
+    return;
+  }
+
+  try {
+    const skipTls = process.env.SMTP_SKIP_TLS_VERIFY === 'true' || getAppSetting('smtp_skip_tls_verify') === 'true';
+    const transporter = nodemailer.createTransport({
+      host: config.host,
+      port: config.port,
+      secure: config.secure,
+      auth: config.user ? { user: config.user, pass: config.pass } : undefined,
+      ...(skipTls ? { tls: { rejectUnauthorized: false } } : {}),
+    });
+
+    await transporter.sendMail({
+      from: config.from,
+      to,
+      subject: strings.subject,
+      text: `${strings.greeting}\n\n${strings.body}\n\n${strings.features.map(f => `• ${f}`).join('\n')}\n\n${strings.ctaIntro}\n\n${strings.signoff}`,
+      html: buildWelcomeHtml(strings, lang),
+    });
+    logInfo(`Welcome email sent to=${to}`);
+  } catch (err) {
+    logError(`Welcome email failed to=${to}: ${err instanceof Error ? err.message : err}`);
   }
 }
 

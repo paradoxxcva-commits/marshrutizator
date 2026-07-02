@@ -57,6 +57,18 @@ const en: NotificationLocale = {
     expiry: 'This link expires in 60 minutes.',
     ignore: "If you didn't request this, you can safely ignore this email — your password won't change.",
   },
+  welcome: {
+    subject: 'Welcome to Marshrutizator!',
+    greeting: 'Hello!',
+    body: 'Thank you for signing up for Marshrutizator \u2014 your personal assistant for crafting perfect journeys.\n\nYour account is fully active and ready to go. You can now:',
+    features: [
+      'Discover points of interest on an interactive map.',
+      'Build smart and optimized itineraries for your upcoming trips.',
+      'Manage travel checklists and keep track of your budget.',
+    ],
+    ctaIntro: 'No further activation is required. Simply head over to the website, log in, and start planning your first adventure!',
+    signoff: 'Safe travels,\nThe Marshrutizator Team',
+  },
 };
 
 export default en;

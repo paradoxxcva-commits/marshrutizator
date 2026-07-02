@@ -18,6 +18,7 @@ import { startTripReminders } from '../scheduler';
 import { deleteUserCompletely } from './userCleanupService';
 import { getFlightDistanceKm } from './distanceService';
 import { verifyJwtAndLoadUser } from '../middleware/auth';
+import { sendWelcomeEmail } from './notifications';
 import { User } from '../types';
 import { DEMO_EMAIL_PRIMARY, isDemoEmail } from './demo';
 import { avatarUrl } from './avatarUrl';
@@ -431,6 +432,10 @@ export function registerUser(body: {
         console.warn(`[Auth] Invite token ${validInvite.token.slice(0, 8)}... exceeded max_uses due to race condition`);
       }
     }
+
+    // Send welcome email (non-blocking)
+    const lang = (db.prepare("SELECT value FROM settings WHERE user_id = ? AND key = 'language'").get(result.lastInsertRowid) as { value: string } | undefined)?.value || 'ru';
+    sendWelcomeEmail(email, username, lang).catch(() => {});
 
     return {
       token,

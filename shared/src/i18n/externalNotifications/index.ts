@@ -24,6 +24,7 @@ import type {
   EmailStrings,
   EventTextFn,
   PasswordResetStrings,
+  WelcomeStrings,
   NotificationEventKey,
 } from './types';
 
@@ -63,4 +64,8 @@ export const EVENT_TEXTS: Record<string, Record<NotificationEventKey, EventTextF
 
 export const PASSWORD_RESET_I18N: Record<string, PasswordResetStrings> = Object.fromEntries(
   Object.entries(LOCALES).map(([k, v]) => [k, v.passwordReset]),
+);
+
+export const WELCOME_I18N: Record<string, WelcomeStrings> = Object.fromEntries(
+  Object.entries(LOCALES).map(([k, v]) => [k, v.welcome]),
 );
