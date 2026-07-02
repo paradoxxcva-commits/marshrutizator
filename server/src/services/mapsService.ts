@@ -1128,3 +1128,110 @@ export async function resolveGoogleMapsUrl(url: string): Promise<{ lat: number; 
 
   return { lat, lng, name, address, google_ftid: googleFtidFromMapsUrl(resolvedUrl) };
 }
+
+// ── Nearby Search with caching ──────────────────────────────────────────────
+
+const NEARBY_CACHE_RADIUS_M = 2000;
+const NEARBY_CACHE_TTL_DAYS = 30;
+const NEARBY_DAILY_LIMIT = 90;
+
+function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371000;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function getTodayKey(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function getDailyUsage(): number {
+  const row = db.prepare('SELECT count FROM google_api_usage WHERE date = ?').get(getTodayKey()) as { count: number } | undefined;
+  return row?.count ?? 0;
+}
+
+function incrementDailyUsage(): void {
+  const today = getTodayKey();
+  db.prepare(
+    'INSERT INTO google_api_usage (date, count) VALUES (?, 1) ON CONFLICT(date) DO UPDATE SET count = count + 1'
+  ).run(today);
+}
+
+interface NearbyPlaceResult {
+  place_id: string;
+  name: string;
+  vicinity: string;
+  geometry: { location: { lat: number; lng: number } };
+  rating?: number;
+  types?: string[];
+  opening_hours?: { open_now?: boolean };
+  photos?: { photo_reference: string }[];
+}
+
+export interface NearbySearchResult {
+  places: NearbyPlaceResult[];
+  source: 'cache' | 'google';
+  cached_at?: string;
+}
+
+export async function getNearbyPlaces(
+  lat: number,
+  lng: number,
+  radius: number,
+  apiKey?: string,
+): Promise<NearbySearchResult> {
+  const clampedRadius = Math.min(Math.max(1, Math.round(radius)), 50000);
+
+  // 1. Check cache
+  const cached = db.prepare(
+    'SELECT id, data, updated_at FROM places_nearby_cache WHERE updated_at >= datetime(\'now\', ?) ORDER BY id DESC'
+  ).get(`-${NEARBY_CACHE_TTL_DAYS} days`) as { id: number; data: string; updated_at: string } | undefined;
+
+  if (cached) {
+    const places = JSON.parse(cached.data) as NearbyPlaceResult[];
+    const nearest = places.find(p => haversineDistance(lat, lng, p.geometry.location.lat, p.geometry.location.lng) <= NEARBY_CACHE_RADIUS_M);
+    if (nearest) {
+      return { places, source: 'cache', cached_at: cached.updated_at };
+    }
+  }
+
+  // 2. Check daily limit
+  if (getDailyUsage() >= NEARBY_DAILY_LIMIT) {
+    if (cached) {
+      return { places: JSON.parse(cached.data), source: 'cache', cached_at: cached.updated_at };
+    }
+    throw Object.assign(new Error('Google Places API daily limit reached'), { status: 429 });
+  }
+
+  // 3. Call Google
+  if (!apiKey) {
+    throw Object.assign(new Error('Google Maps API key not configured'), { status: 400 });
+  }
+
+  const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${clampedRadius}&key=${encodeURIComponent(apiKey)}`;
+  const response = await googleFetch(url, 'nearbysearch');
+  const data = await response.json() as { status: string; results: NearbyPlaceResult[]; error_message?: string };
+
+  if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
+    throw Object.assign(new Error(`Google Places error: ${data.status} ${data.error_message || ''}`), { status: 502 });
+  }
+
+  incrementDailyUsage();
+
+  // 4. Save to cache
+  const results = data.results || [];
+  const existing = db.prepare(
+    'SELECT id FROM places_nearby_cache WHERE ABS(lat - ?) < 0.001 AND ABS(lng - ?) < 0.001 AND radius = ?'
+  ).get(lat, lng, clampedRadius) as { id: number } | undefined;
+
+  if (existing) {
+    db.prepare('UPDATE places_nearby_cache SET data = ?, updated_at = datetime(\'now\') WHERE id = ?').run(JSON.stringify(results), existing.id);
+  } else {
+    db.prepare('INSERT INTO places_nearby_cache (lat, lng, radius, data) VALUES (?, ?, ?, ?)').run(lat, lng, clampedRadius, JSON.stringify(results));
+  }
+
+  return { places: results, source: 'google' };
+}

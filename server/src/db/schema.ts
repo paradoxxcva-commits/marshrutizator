@@ -503,6 +503,21 @@ function createTables(db: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_ncp_user ON notification_channel_preferences(user_id);
 
     CREATE TABLE IF NOT EXISTS migrations (id integer PRIMARY KEY AUTOINCREMENT NOT NULL, timestamp bigint NOT NULL, name varchar NOT NULL);
+
+    CREATE TABLE IF NOT EXISTS places_nearby_cache (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      lat REAL NOT NULL,
+      lng REAL NOT NULL,
+      radius INTEGER NOT NULL,
+      data TEXT NOT NULL,
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_places_cache_coords ON places_nearby_cache(lat, lng);
+
+    CREATE TABLE IF NOT EXISTS google_api_usage (
+      date TEXT PRIMARY KEY,
+      count INTEGER DEFAULT 0
+    );
   `);
 }
 

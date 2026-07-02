@@ -17,6 +17,8 @@ import {
   reverseGeocode,
   resolveGoogleMapsUrl,
   searchOverpassPois,
+  getNearbyPlaces,
+  getMapsKey,
 } from '../../services/mapsService';
 import { serveFilePath } from '../../services/placePhotoCache';
 
@@ -91,5 +93,10 @@ export class MapsService {
   // OSM-only POI search by category within a viewport bbox (never calls Google).
   pois(category: string, bbox: { south: number; west: number; north: number; east: number }) {
     return searchOverpassPois(category, bbox);
+  }
+
+  nearby(userId: number, lat: number, lng: number, radius: number) {
+    const apiKey = getMapsKey(userId);
+    return getNearbyPlaces(lat, lng, radius, apiKey || undefined);
   }
 }

@@ -221,4 +221,24 @@ export class MapsController {
       throw toHttpException(err, 'Failed to resolve URL', 400);
     }
   }
+
+  @Get('nearby')
+  async nearby(
+    @CurrentUser() user: User,
+    @Query('lat') lat?: string,
+    @Query('lng') lng?: string,
+    @Query('radius') radius?: string,
+  ) {
+    const latNum = parseFloat(lat || '');
+    const lngNum = parseFloat(lng || '');
+    const radiusNum = parseInt(radius || '1500', 10);
+    if (!Number.isFinite(latNum) || !Number.isFinite(lngNum)) {
+      throw new HttpException({ error: 'lat and lng are required finite numbers' }, 400);
+    }
+    try {
+      return await this.maps.nearby(user.id, latNum, lngNum, radiusNum);
+    } catch (err: unknown) {
+      throw toHttpException(err, 'Nearby search error', 500);
+    }
+  }
 }
