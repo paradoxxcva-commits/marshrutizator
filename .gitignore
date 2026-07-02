@@ -28,6 +28,10 @@ server/uploads/
 .env.*
 !.env.example
 
+# Secrets
+CREDENTIALS.md
+data/.jwt_secret
+
 # OS files
 .DS_Store
 Thumbs.db
