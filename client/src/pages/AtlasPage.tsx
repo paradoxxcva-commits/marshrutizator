@@ -84,6 +84,7 @@ export default function AtlasPage(): React.ReactElement {
     bucketSearchResults, setBucketSearchResults,
     bucketPoiMonth, setBucketPoiMonth, bucketPoiYear, setBucketPoiYear,
     bucketSearching, bucketSearch, setBucketSearch,
+    showRegions, setShowRegions, zoomToRussia,
   } = useAtlas()
   const toast = useToast()
 
@@ -128,6 +129,44 @@ export default function AtlasPage(): React.ReactElement {
           options={atlas_country_options}
           onSelect={select_country_from_search}
         />
+
+        {/* Quick zoom + region toggle buttons */}
+        <div className="absolute z-10 flex gap-1.5" style={{ top: 'calc(var(--nav-h) + 16px)', left: 16 }}>
+          <button
+            onClick={zoomToRussia}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+            style={{
+              background: dark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)',
+              backdropFilter: 'blur(8px)',
+              border: `1px solid ${dark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)'}`,
+              color: dark ? '#fff' : '#374151',
+            }}
+          >
+            🇷🇺 Россия
+          </button>
+          <button
+            onClick={() => {
+              if (showRegions) {
+                setShowRegions(false)
+                // Reset zoom to country level
+              } else {
+                zoomToRussia()
+              }
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+            style={{
+              background: showRegions
+                ? (dark ? 'rgba(59,130,246,0.3)' : 'rgba(59,130,246,0.15)')
+                : (dark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)'),
+              backdropFilter: 'blur(8px)',
+              border: `1px solid ${showRegions ? 'rgba(59,130,246,0.5)' : (dark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)')}`,
+              color: showRegions ? '#3b82f6' : (dark ? '#fff' : '#374151'),
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/></svg>
+            Области
+          </button>
+        </div>
 
         {/* Mobile: Bottom bar */}
         <div className="md:hidden absolute left-0 right-0 z-10 flex justify-center" style={{ bottom: 'calc(84px + env(safe-area-inset-bottom, 0px) + 8px)', touchAction: 'manipulation' }}>
@@ -193,6 +232,7 @@ export default function AtlasPage(): React.ReactElement {
             bucketSearchResults={bucketSearchResults} setBucketSearchResults={setBucketSearchResults} bucketPoiMonth={bucketPoiMonth} setBucketPoiMonth={setBucketPoiMonth}
             bucketPoiYear={bucketPoiYear} setBucketPoiYear={setBucketPoiYear} bucketSearching={bucketSearching}
             bucketSearch={bucketSearch} setBucketSearch={setBucketSearch}
+            visitedRegions={visitedRegions} visitedCountryCodes={countries.map(c => c.code || c)}
             t={t} dark={dark}
           />
         </div>
@@ -477,11 +517,13 @@ interface SidebarContentProps {
   bucketSearching: boolean
   bucketSearch: string
   setBucketSearch: (v: string) => void
+  visitedRegions: Record<string, any[]>
+  visitedCountryCodes: string[]
   t: TranslationFn
   dark: boolean
 }
 
-function SidebarContent({ data, stats, countries, selectedCountry, countryDetail, resolveName, onTripClick, onUnmarkCountry, bucketList, bucketTab, setBucketTab, showBucketAdd, setShowBucketAdd, bucketForm, setBucketForm, onAddBucket, onDeleteBucket, onSearchBucket, onSelectBucketPoi, bucketSearchResults, setBucketSearchResults, bucketPoiMonth, setBucketPoiMonth, bucketPoiYear, setBucketPoiYear, bucketSearching, bucketSearch, setBucketSearch, t, dark }: SidebarContentProps): React.ReactElement {
+function SidebarContent({ data, stats, countries, selectedCountry, countryDetail, resolveName, onTripClick, onUnmarkCountry, bucketList, bucketTab, setBucketTab, showBucketAdd, setShowBucketAdd, bucketForm, setBucketForm, onAddBucket, onDeleteBucket, onSearchBucket, onSelectBucketPoi, bucketSearchResults, setBucketSearchResults, bucketPoiMonth, setBucketPoiMonth, bucketPoiYear, setBucketPoiYear, bucketSearching, bucketSearch, setBucketSearch, visitedRegions, visitedCountryCodes, t, dark }: SidebarContentProps): React.ReactElement {
   const { language } = useTranslation()
   const statsContentRef = useRef<HTMLDivElement>(null)
   const [statsWidth, setStatsWidth] = useState<number | undefined>(undefined)
@@ -673,6 +715,25 @@ function SidebarContent({ data, stats, countries, selectedCountry, countryDetail
           <span className="text-[9px] font-semibold mt-1.5 uppercase tracking-wide whitespace-nowrap" style={{ color: tf }}>{l}</span>
         </div>
       ))}
+
+      {/* ═══ DIVIDER ═══ */}
+      <div style={{ width: 2, background: bg(0.08), margin: '12px 14px' }} />
+
+      {/* ═══ SECTION: Russia Regions ═══ */}
+      {(() => {
+        const ruRegions = visitedRegions?.RU || []
+        const ruCount = ruRegions.length
+        if (ruCount === 0 && !visitedCountryCodes.includes('RU')) return null
+        return (
+          <div className="flex items-center gap-3 px-4 py-3 shrink-0">
+            <span style={{ fontSize: 20 }}>🇷🇺</span>
+            <div className="flex flex-col">
+              <span className="text-lg font-black tabular-nums leading-none" style={{ color: tp }}>{ruCount}<span className="text-xs font-normal" style={{ color: tf }}> / 85</span></span>
+              <span className="text-[9px] font-semibold mt-1 uppercase tracking-wide" style={{ color: tf }}>областей</span>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* ═══ DIVIDER ═══ */}
       <div style={{ width: 2, background: bg(0.08), margin: '12px 14px' }} />
