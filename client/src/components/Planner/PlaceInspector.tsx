@@ -567,6 +567,20 @@ function PlaceInspectorHeader({ openNow, place, category, t, editingName, nameIn
                 <span className="text-content-muted" style={{ fontSize: 12, lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{place.address}</span>
               </div>
             )}
+            {googleMapsUrl && (
+              <div style={{ marginTop: 4 }}>
+                <a
+                  href={googleMapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                  style={{ fontSize: 11, textDecoration: 'underline', display: 'inline-flex', alignItems: 'center', gap: 3 }}
+                >
+                  <Navigation size={10} />
+                  {t('inspector.google')}
+                </a>
+              </div>
+            )}
             {place.place_time && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 3 }}>
                 <Clock size={10} color="var(--text-faint)" style={{ flexShrink: 0 }} />
