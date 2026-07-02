@@ -57,6 +57,7 @@ export default function BottomNav() {
       const nav = ADDON_NAV[addon.id]
       return nav ? [{ to: `/${addon.id}`, label: t(nav.labelKey), icon: nav.icon }] : []
     }),
+    { to: '/russia', label: 'Карта РФ', icon: Globe },
   ]
   // Split the items so the raised "+" sits dead centre.
   const splitAt = Math.ceil(items.length / 2)

@@ -716,11 +716,5 @@ export function useAtlas() {
     bucketSearchResults, setBucketSearchResults,
     bucketPoiMonth, setBucketPoiMonth, bucketPoiYear, setBucketPoiYear,
     bucketSearching, bucketSearch, setBucketSearch,
-    showRegions, setShowRegions,
-    zoomToRussia: () => {
-      if (!mapInstance.current) return
-      mapInstance.current.flyTo([60, 100], 5, { duration: 1.5 })
-      setShowRegions(true)
-    },
   }
 }

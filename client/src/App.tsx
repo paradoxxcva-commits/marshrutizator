@@ -13,6 +13,7 @@ import AdminPage from './pages/AdminPage'
 import SettingsPage from './pages/SettingsPage'
 import VacayPage from './pages/VacayPage'
 import AtlasPage from './pages/AtlasPage'
+import RussiaMapPage from './pages/RussiaMapPage'
 import JourneyPage from './pages/JourneyPage'
 import JourneyDetailPage from './pages/JourneyDetailPage'
 import JourneyPublicPage from './pages/JourneyPublicPage'
@@ -272,6 +273,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <AtlasPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/russia"
+          element={
+            <ProtectedRoute>
+              <RussiaMapPage />
             </ProtectedRoute>
           }
         />
