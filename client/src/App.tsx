@@ -47,6 +47,14 @@ function ProtectedRoute({ children, adminRequired = false, addonId }: ProtectedR
   const { t } = useTranslation()
   const location = useLocation()
 
+  // Yandex Metrika — track SPA route changes
+  useEffect(() => {
+    const ym = (window as any).ym
+    if (typeof ym === 'function') {
+      ym(110299169, 'hit', location.pathname + location.search + location.hash)
+    }
+  }, [location.pathname, location.search, location.hash])
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">

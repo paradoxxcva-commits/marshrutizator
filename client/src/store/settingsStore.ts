@@ -23,18 +23,18 @@ export const hasStoredLanguage = (): boolean =>
 export const useSettingsStore = create<SettingsState>((set, get) => ({
   settings: {
     map_tile_url: '',
-    default_lat: 48.8566,
-    default_lng: 2.3522,
+    default_lat: 55.7558,
+    default_lng: 37.6173,
     default_zoom: 10,
     dark_mode: false,
-    default_currency: 'USD',
+    default_currency: 'RUB',
     language: localStorage.getItem('app_language') || 'ru',
     temperature_unit: 'fahrenheit',
     distance_unit: 'metric',
     time_format: '12h',
     show_place_description: false,
     optimize_from_accommodation: true,
-    map_provider: 'maplibre-gl',
+    map_provider: 'leaflet',
     map_poi_pill_enabled: true,
     mapbox_access_token: '',
     mapbox_style: 'mapbox://styles/mapbox/standard',
@@ -42,7 +42,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     mapbox_3d_enabled: true,
     mapbox_quality_mode: false,
     dashboard_fx_from: 'EUR',
-    dashboard_fx_to: 'USD',
+    dashboard_fx_to: 'RUB',
     // dashboard_timezones is intentionally left unset so the widget can tell "never
     // chosen" (fall back to home + defaults) from an explicitly emptied list.
   },

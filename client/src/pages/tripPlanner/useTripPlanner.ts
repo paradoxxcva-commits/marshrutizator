@@ -382,6 +382,21 @@ export function useTripPlanner() {
     setShowPlaceForm(true)
   }, [trip])
 
+  // Open the Add-Place form pre-filled from a Google Places search result
+  const openAddPlaceFromSearch = useCallback((place: { lat: number; lng: number; name: string; address: string; google_place_id: string }) => {
+    if (!can('place_edit', trip)) return
+    setPrefillCoords({
+      lat: place.lat,
+      lng: place.lng,
+      name: place.name,
+      address: place.address,
+      google_place_id: place.google_place_id,
+    })
+    setEditingPlace(null)
+    setEditingAssignmentId(null)
+    setShowPlaceForm(true)
+  }, [trip])
+
   const handleSavePlace = useCallback(async (data) => {
     const pendingFiles = data._pendingFiles
     delete data._pendingFiles
@@ -700,7 +715,7 @@ export function useTripPlanner() {
     isMobile, mapCategoryFilter, setMapCategoryFilter, mapPlacesFilter, setMapPlacesFilter,
     expandedDayIds, setExpandedDayIds, mapPlaces,
     route, routeSegments, routeInfo, setRoute, setRouteInfo, updateRouteForDay,
-    handleSelectDay, handlePlaceClick, handleMarkerClick, handleMapClick, handleMapContextMenu, openAddPlaceFromPoi,
+    handleSelectDay, handlePlaceClick, handleMarkerClick, handleMapClick, handleMapContextMenu, openAddPlaceFromPoi, openAddPlaceFromSearch,
     handleSavePlace, openPlaceEditor, handleDeletePlace, confirmDeletePlace, confirmDeletePlaces,
     handleAssignToDay, handleRemoveAssignment, handleReorder, handleReorderDays, handleAddDay, handleUpdateDayTitle,
     handleSaveReservation, handleSaveTransport, handleDeleteReservation,

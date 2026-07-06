@@ -11,6 +11,192 @@ import { getCategoryIcon, CATEGORY_ICON_MAP } from '../shared/categoryIcons'
 import ReservationOverlay from './ReservationOverlay'
 import type { Reservation } from '../../types'
 import { POI_CATEGORY_BY_KEY, type Poi } from './poiCategories'
+import { Search, X, MapPin } from 'lucide-react'
+
+// ── Map search overlay ──────────────────────────────────────────────────────
+interface SearchResult {
+  placeId: string
+  name: string
+  address: string
+  lat: number
+  lng: number
+}
+
+function MapSearchOverlay() {
+  const map = useMap()
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState<SearchResult[]>([])
+  const [markers, setMarkers] = useState<SearchResult[]>([])
+  const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
+
+  const fetchSuggestions = useCallback(async (q: string) => {
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+    setLoading(true)
+    try {
+      const data = await mapsApi.autocomplete(q, 'ru', undefined, controller.signal)
+      if (!controller.signal.aborted) {
+        const suggestions = (data.suggestions || []).map((s: any) => ({
+          placeId: s.placeId,
+          name: s.mainText,
+          address: s.secondaryText || '',
+          lat: 0,
+          lng: 0,
+        }))
+        setResults(suggestions)
+      }
+    } catch {
+      if (!controller.signal.aborted) setResults([])
+    } finally {
+      if (!controller.signal.aborted) setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    const trimmed = query.trim()
+    if (trimmed.length < 2) {
+      setResults([])
+      abortRef.current?.abort()
+      return
+    }
+    debounceRef.current = setTimeout(() => fetchSuggestions(trimmed), 300)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  }, [query, fetchSuggestions])
+
+  const selectPlace = useCallback(async (result: SearchResult) => {
+    try {
+      const res = await mapsApi.details(result.placeId, 'ru')
+      const d = res.place || res
+      const place: SearchResult = {
+        placeId: result.placeId,
+        name: d.name || result.name,
+        address: d.address || result.address,
+        lat: d.lat,
+        lng: d.lng,
+      }
+      setMarkers(prev => [...prev, place])
+      setQuery('')
+      setResults([])
+      setOpen(false)
+      map.flyTo([place.lat, place.lng], 15, { duration: 1 })
+    } catch {}
+  }, [map])
+
+  const removeMarker = useCallback((placeId: string) => {
+    setMarkers(prev => prev.filter(m => m.placeId !== placeId))
+  }, [])
+
+  return (
+    <>
+      {/* Search input */}
+      <div style={{
+        position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 1000,
+        width: 'min(420px, calc(100vw - 32px))',
+      }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          background: 'var(--sidebar-bg)',
+          backdropFilter: 'blur(20px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+          boxShadow: 'var(--sidebar-shadow, 0 4px 16px rgba(0,0,0,0.14))',
+          borderRadius: 999,
+          padding: '6px 14px',
+        }}>
+          <Search size={16} style={{ color: 'var(--text-faint)', flexShrink: 0 }} />
+          <input
+            type="text"
+            value={query}
+            onChange={e => { setQuery(e.target.value); setOpen(true) }}
+            onFocus={() => setOpen(true)}
+            placeholder="Поиск мест..."
+            style={{
+              flex: 1, border: 'none', outline: 'none', background: 'transparent',
+              fontSize: 13, color: 'var(--text-primary)', fontFamily: 'inherit',
+            }}
+          />
+          {query && (
+            <button onClick={() => { setQuery(''); setResults([]); setOpen(false) }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}>
+              <X size={14} style={{ color: 'var(--text-faint)' }} />
+            </button>
+          )}
+        </div>
+
+        {/* Results dropdown */}
+        {open && results.length > 0 && (
+          <div style={{
+            marginTop: 4,
+            background: 'var(--sidebar-bg)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            boxShadow: 'var(--sidebar-shadow, 0 4px 16px rgba(0,0,0,0.14))',
+            borderRadius: 12, overflow: 'hidden',
+            maxHeight: 300, overflowY: 'auto',
+          }}>
+            {results.map(r => (
+              <button
+                key={r.placeId}
+                onClick={() => selectPlace(r)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+                  padding: '10px 14px', border: 'none', background: 'transparent',
+                  cursor: 'pointer', textAlign: 'left',
+                  borderBottom: '1px solid var(--border-faint)',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              >
+                <MapPin size={14} style={{ color: 'var(--text-faint)', flexShrink: 0 }} />
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</div>
+                  {r.address && <div style={{ fontSize: 10, color: 'var(--text-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.address}</div>}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {open && loading && (
+          <div style={{
+            marginTop: 4,
+            background: 'var(--sidebar-bg)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            boxShadow: 'var(--sidebar-shadow, 0 4px 16px rgba(0,0,0,0.14))',
+            borderRadius: 12, padding: '10px 14px',
+            textAlign: 'center', fontSize: 12, color: 'var(--text-faint)',
+          }}>
+            Поиск...
+          </div>
+        )}
+      </div>
+
+      {/* Search result markers */}
+      {markers.map(m => (
+        <Marker
+          key={`search-${m.placeId}`}
+          position={[m.lat, m.lng]}
+          icon={L.divIcon({
+            className: '',
+            html: `<div style="width:32px;height:32px;border-radius:50%;background:#ef4444;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.3);border:2px solid white"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></div>`,
+            iconSize: [32, 32],
+            iconAnchor: [16, 16],
+          })}
+        >
+          <Tooltip direction="top" offset={[0, -16]} opacity={1} className="map-tooltip">
+            <div style={{ fontWeight: 600, fontSize: 12 }}>{m.name}</div>
+            {m.address && <div style={{ fontSize: 11, color: '#6b7280' }}>{m.address}</div>}
+          </Tooltip>
+        </Marker>
+      ))}
+    </>
+  )
+}
 
 function categoryIconSvg(iconName: string | null | undefined, size: number): string {
   const IconComponent = (iconName && CATEGORY_ICON_MAP[iconName]) || CATEGORY_ICON_MAP['MapPin']
@@ -566,9 +752,6 @@ export const MapView = memo(function MapView({
   const CatIcon = TooltipOverlay ? getCategoryIcon(hoveredPlace.category_icon) : null
 
   const { position: userPosition, mode: trackingMode, error: trackingError, cycleMode: cycleTrackingMode } = useGeolocation()
-  // Desktop browsers only get IP-based geolocation (city-level accuracy),
-  // so the button would be misleading. Mobile, where real GPS lives, keeps it.
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
   const locationButtonBottom = 'calc(var(--bottom-nav-h, 84px) + 12px)'
 
   return (
@@ -639,13 +822,14 @@ export const MapView = memo(function MapView({
       />
 
       {poiMarkers}
+      <MapSearchOverlay />
     </MapContainer>
-    {isMobile && <LocationButton
+    <LocationButton
       mode={trackingMode}
       error={trackingError}
       onClick={cycleTrackingMode}
       bottomOffset={locationButtonBottom as unknown as number}
-    />}
+    />
     </div>
 
     {TooltipOverlay && (

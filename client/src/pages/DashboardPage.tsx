@@ -489,7 +489,7 @@ function TripCard({ trip, locale, onOpen, onEdit, onCopy, onArchive, onDelete }:
 }
 
 // ── Currency tool (self-contained, mirrors the design's fx widget) ───────────
-const FX_FALLBACK = ['EUR', 'USD', 'GBP', 'CHF', 'JPY', 'CAD', 'AUD', 'CNY', 'SEK', 'NOK', 'DKK', 'PLN', 'CZK', 'HUF', 'TRY', 'THB', 'INR', 'BRL', 'MXN', 'ZAR']
+const FX_FALLBACK = ['EUR', 'USD', 'GBP', 'CHF', 'JPY', 'CAD', 'AUD', 'CNY', 'SEK', 'NOK', 'DKK', 'PLN', 'CZK', 'HUF', 'TRY', 'THB', 'INR', 'BRL', 'MXN', 'ZAR', 'RUB']
 
 function CurrencyTool(): React.ReactElement {
   const { t } = useTranslation()

@@ -103,7 +103,15 @@ export default function AtlasPage(): React.ReactElement {
       <Navbar />
       <div style={{ position: 'fixed', top: 'var(--nav-h)', left: 0, right: 0, bottom: 'env(safe-area-inset-bottom, 0px)' }}>
         {/* Map */}
-        <div ref={mapRef} style={{ position: 'absolute', inset: 0, zIndex: 1, background: dark ? '#1a1a2e' : '#f0f0f0' }} />
+        <div ref={mapRef} style={{ position: 'absolute', inset: 0, zIndex: 1, background: dark ? '#0a1628' : '#c6ddf0' }} />
+        {/* Blue water tint overlay — only in dark mode */}
+        {dark && (
+          <div style={{
+            position: 'absolute', inset: 0, zIndex: 2, pointerEvents: 'none',
+            background: 'rgba(10, 40, 100, 0.45)',
+            mixBlendMode: 'color',
+          }} />
+        )}
 
         {/* Region tooltip (custom, always on top, ref-controlled to avoid re-renders) */}
         <div ref={regionTooltipRef} style={{

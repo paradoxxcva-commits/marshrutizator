@@ -24,7 +24,15 @@ export default function RussiaMapPage(): React.ReactElement {
 
       <div className="flex-1 relative overflow-hidden">
         {/* Map */}
-        <div ref={mapRef} className="absolute inset-0" />
+        <div ref={mapRef} className="absolute inset-0" style={{ background: dark ? '#0a1628' : '#c6ddf0' }} />
+        {/* Blue water tint overlay — only in dark mode */}
+        {dark && (
+          <div style={{
+            position: 'absolute', inset: 0, zIndex: 2, pointerEvents: 'none',
+            background: 'rgba(10, 40, 100, 0.45)',
+            mixBlendMode: 'color',
+          }} />
+        )}
 
         {/* Tooltip */}
         <div ref={tooltipRef} className="fixed z-50 pointer-events-none bg-white dark:bg-slate-800 rounded-lg shadow-lg px-3 py-2 border border-slate-200 dark:border-slate-700" style={{ display: 'none' }} />
