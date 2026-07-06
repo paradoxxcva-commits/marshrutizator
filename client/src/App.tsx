@@ -49,10 +49,16 @@ function ProtectedRoute({ children, adminRequired = false, addonId }: ProtectedR
 
   // Yandex Metrika — track SPA route changes
   useEffect(() => {
-    const ym = (window as any).ym
-    if (typeof ym === 'function') {
-      ym(110299169, 'hit', location.pathname + location.search + location.hash)
+    const hit = () => {
+      const ym = (window as any).ym
+      if (typeof ym === 'function') {
+        ym(110299169, 'hit', location.pathname + location.search + location.hash)
+      }
     }
+    // Try immediately, then retry after script loads
+    hit()
+    const timer = setTimeout(hit, 1000)
+    return () => clearTimeout(timer)
   }, [location.pathname, location.search, location.hash])
 
   if (isLoading) {

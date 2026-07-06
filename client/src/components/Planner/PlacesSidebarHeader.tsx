@@ -69,18 +69,25 @@ export function PlacesHeader(S: SidebarState) {
     try {
       const res = await mapsApi.details(s.placeId, 'ru')
       const d = res.place || res
-      onAddPlaceFromSearch?.({
+      const placeData = {
         lat: d.lat,
         lng: d.lng,
         name: d.name || s.mainText,
         address: d.address || s.secondaryText,
         google_place_id: s.placeId,
-      })
-      setSearch('')
+      }
+      // Save to search history
+      try {
+        const history = JSON.parse(localStorage.getItem('marshrutizator_search_history') || '[]')
+        const filtered = [placeData, ...history.filter((h: any) => h.google_place_id !== s.placeId)].slice(0, 5)
+        localStorage.setItem('marshrutizator_search_history', JSON.stringify(filtered))
+      } catch {}
+      // Don't open PlaceFormModal — just set search field
+      setSearch(d.name || s.mainText)
       setSuggestions([])
       setSuggestOpen(false)
     } catch {}
-  }, [onAddPlaceFromSearch, setSearch])
+  }, [setSearch])
   return (
     <div className="border-b border-edge-faint" style={{ padding: '14px 16px 10px', flexShrink: 0 }}>
       {canEditPlaces && <button
@@ -187,7 +194,7 @@ export function PlacesHeader(S: SidebarState) {
           type="text"
           value={search}
           onChange={e => { setSearch(e.target.value); setSuggestOpen(true); if (selectMode) setSelectedIds(new Set()) }}
-          onFocus={() => { if (suggestions.length > 0) setSuggestOpen(true) }}
+          onFocus={() => { if (suggestions.length > 0 || !search) setSuggestOpen(true) }}
           onBlur={() => setTimeout(() => setSuggestOpen(false), 200)}
           placeholder={onAddPlaceFromSearch ? 'Поиск мест на карте...' : t('places.search')}
           className="bg-surface-tertiary text-content"
@@ -202,6 +209,47 @@ export function PlacesHeader(S: SidebarState) {
             <X size={12} strokeWidth={2} color="var(--text-faint)" />
           </button>
         )}
+
+        {/* Search history (when empty and focused) */}
+        {suggestOpen && !search && onAddPlaceFromSearch && (() => {
+          try {
+            const hist = JSON.parse(localStorage.getItem('marshrutizator_search_history') || '[]')
+            if (hist.length === 0) return null
+            return (
+              <div style={{
+                position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
+                marginTop: 4, background: 'var(--bg-card)', borderRadius: 10,
+                boxShadow: '0 4px 16px rgba(0,0,0,0.15)', overflow: 'hidden',
+                border: '1px solid var(--border-primary)',
+              }}>
+                <div style={{ padding: '6px 10px', fontSize: 10, fontWeight: 600, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Недавние
+                </div>
+                {hist.map((h: any, i: number) => (
+                  <button key={i}
+                    onMouseDown={() => {
+                      setSearch(h.name)
+                      setSuggestOpen(false)
+                    }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                      padding: '8px 10px', border: 'none', background: 'transparent',
+                      cursor: 'pointer', textAlign: 'left', borderTop: '1px solid var(--border-faint)',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <MapPin size={14} style={{ color: 'var(--text-faint)', flexShrink: 0 }} />
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.name}</div>
+                      {h.address && <div style={{ fontSize: 10, color: 'var(--text-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.address}</div>}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )
+          } catch { return null }
+        })()}
 
         {/* Google Places autocomplete dropdown */}
         {suggestOpen && onAddPlaceFromSearch && suggestions.length > 0 && (

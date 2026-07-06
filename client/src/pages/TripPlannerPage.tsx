@@ -327,6 +327,7 @@ export default function TripPlannerPage(): React.ReactElement | null {
               pois={poi.pois}
               onPoiClick={openAddPlaceFromPoi}
               onViewportChange={poi.onViewportChange}
+              onPlaceSelect={openAddPlaceFromSearch}
               onMapReady={setGlMap}
             />
 

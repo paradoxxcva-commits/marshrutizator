@@ -22,7 +22,7 @@ interface SearchResult {
   lng: number
 }
 
-function MapSearchOverlay() {
+function MapSearchOverlay({ onPlaceSelect }: { onPlaceSelect?: (place: { lat: number; lng: number; name: string; address: string; google_place_id: string }) => void }) {
   const map = useMap()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
@@ -31,6 +31,24 @@ function MapSearchOverlay() {
   const [loading, setLoading] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const abortRef = useRef<AbortController | null>(null)
+
+  // Search history
+  const [history, setHistory] = useState<{ name: string; address: string; lat: number; lng: number; google_place_id: string }[]>([])
+  useEffect(() => {
+    try { setHistory(JSON.parse(localStorage.getItem('marshrutizator_search_history') || '[]')) } catch {}
+  }, [])
+
+  // Location
+  const [locating, setLocating] = useState(false)
+  const flyToUser = useCallback(() => {
+    if (!navigator.geolocation) return
+    setLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => { map.flyTo([pos.coords.latitude, pos.coords.longitude], 15, { duration: 1 }); setLocating(false) },
+      () => setLocating(false),
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
+  }, [map])
 
   const fetchSuggestions = useCallback(async (q: string) => {
     abortRef.current?.abort()
@@ -84,6 +102,14 @@ function MapSearchOverlay() {
       setResults([])
       setOpen(false)
       map.flyTo([place.lat, place.lng], 15, { duration: 1 })
+      // Save to search history
+      try {
+        const history = JSON.parse(localStorage.getItem('marshrutizator_search_history') || '[]')
+        const entry = { name: place.name, address: place.address, lat: place.lat, lng: place.lng, google_place_id: place.placeId }
+        const filtered = [entry, ...history.filter((h: any) => h.google_place_id !== place.placeId)].slice(0, 5)
+        localStorage.setItem('marshrutizator_search_history', JSON.stringify(filtered))
+      } catch {}
+      // Don't open PlaceFormModal — just fly to location
     } catch {}
   }, [map])
 
@@ -93,13 +119,32 @@ function MapSearchOverlay() {
 
   return (
     <>
-      {/* Search input */}
+      {/* Search bar + location button */}
       <div style={{
         position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 1000,
+        display: 'flex', alignItems: 'center', gap: 8,
         width: 'min(420px, calc(100vw - 32px))',
       }}>
+        {/* Location button — separate */}
+        <button onClick={flyToUser} title="Моё местоположение"
+          style={{
+            background: 'var(--sidebar-bg)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            boxShadow: 'var(--sidebar-shadow, 0 4px 16px rgba(0,0,0,0.14))',
+            borderRadius: 999, padding: 10, display: 'flex', flexShrink: 0,
+            cursor: 'pointer', border: 'none',
+          }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={locating ? '#3b82f6' : 'currentColor'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M2 12h3m14 0h3M12 2v3m0 14v3"/>
+            <circle cx="12" cy="12" r="4"/>
+            <circle cx="12" cy="12" r="1" fill={locating ? '#3b82f6' : 'currentColor'}/>
+          </svg>
+        </button>
+
+        {/* Search input */}
         <div style={{
-          display: 'flex', alignItems: 'center', gap: 8,
+          flex: 1, display: 'flex', alignItems: 'center', gap: 6,
           background: 'var(--sidebar-bg)',
           backdropFilter: 'blur(20px) saturate(180%)',
           WebkitBackdropFilter: 'blur(20px) saturate(180%)',
@@ -107,12 +152,12 @@ function MapSearchOverlay() {
           borderRadius: 999,
           padding: '6px 14px',
         }}>
-          <Search size={16} style={{ color: 'var(--text-faint)', flexShrink: 0 }} />
           <input
             type="text"
             value={query}
             onChange={e => { setQuery(e.target.value); setOpen(true) }}
             onFocus={() => setOpen(true)}
+            onBlur={() => setTimeout(() => setOpen(false), 200)}
             placeholder="Поиск мест..."
             style={{
               flex: 1, border: 'none', outline: 'none', background: 'transparent',
@@ -126,6 +171,43 @@ function MapSearchOverlay() {
             </button>
           )}
         </div>
+
+        {/* Search history (when empty and focused) */}
+        {open && !query && history.length > 0 && (
+          <div style={{
+            marginTop: 4,
+            background: 'var(--sidebar-bg)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            boxShadow: 'var(--sidebar-shadow, 0 4px 16px rgba(0,0,0,0.14))',
+            borderRadius: 12, overflow: 'hidden',
+          }}>
+            <div style={{ padding: '6px 10px', fontSize: 10, fontWeight: 600, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Недавние
+            </div>
+            {history.map((h, i) => (
+              <button key={i}
+                onMouseDown={() => {
+                  map.flyTo([h.lat, h.lng], 15, { duration: 1 })
+                  setOpen(false)
+                }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                  padding: '8px 10px', border: 'none', background: 'transparent',
+                  cursor: 'pointer', textAlign: 'left', borderTop: '1px solid var(--border-faint)',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              >
+                <MapPin size={14} style={{ color: 'var(--text-faint)', flexShrink: 0 }} />
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.name}</div>
+                  {h.address && <div style={{ fontSize: 10, color: 'var(--text-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.address}</div>}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Results dropdown */}
         {open && results.length > 0 && (
@@ -595,6 +677,7 @@ export const MapView = memo(function MapView({
   pois = [] as Poi[],
   onPoiClick,
   onViewportChange,
+  onPlaceSelect,
 }: any) {
   const poiMarkers = useMemo(() => (pois as Poi[]).map((poi: Poi) => (
     <Marker
@@ -822,14 +905,8 @@ export const MapView = memo(function MapView({
       />
 
       {poiMarkers}
-      <MapSearchOverlay />
+      {/* <MapSearchOverlay onPlaceSelect={onPlaceSelect} /> */}
     </MapContainer>
-    <LocationButton
-      mode={trackingMode}
-      error={trackingError}
-      onClick={cycleTrackingMode}
-      bottomOffset={locationButtonBottom as unknown as number}
-    />
     </div>
 
     {TooltipOverlay && (
