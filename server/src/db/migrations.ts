@@ -3071,6 +3071,18 @@ function runMigrations(db: Database.Database): void {
         if (!err.message?.includes('duplicate column name')) throw err;
       }
     },
+    // Migration N: Place search result cache (reduces Google Places API calls)
+    () => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS place_search_cache (
+          cache_key    TEXT PRIMARY KEY,
+          payload_json TEXT NOT NULL,
+          source       TEXT NOT NULL,
+          fetched_at   INTEGER NOT NULL
+        )
+      `);
+      db.exec('CREATE INDEX IF NOT EXISTS idx_search_cache_fetched ON place_search_cache(fetched_at)');
+    },
   ];
 
   if (currentVersion < migrations.length) {

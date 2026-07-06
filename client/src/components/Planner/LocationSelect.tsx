@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { MapPin, X } from 'lucide-react'
 import { mapsApi } from '../../api/client'
 import { useTranslation } from '../../i18n'
@@ -17,15 +17,22 @@ interface Props {
   style?: React.CSSProperties
 }
 
+interface AutocompleteSuggestion {
+  placeId: string
+  mainText: string
+  secondaryText: string
+}
+
 export default function LocationSelect({ value, onChange, placeholder, style }: Props) {
   const { t, locale } = useTranslation()
   const [query, setQuery] = useState(value?.name || '')
   const [open, setOpen] = useState(false)
-  const [results, setResults] = useState<any[]>([])
+  const [results, setResults] = useState<AutocompleteSuggestion[]>([])
   const [highlight, setHighlight] = useState(-1)
   const [loading, setLoading] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const acAbortRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
     setQuery(value?.name || '')
@@ -39,37 +46,85 @@ export default function LocationSelect({ value, onChange, placeholder, style }: 
     return () => document.removeEventListener('mousedown', handler)
   }, [open])
 
+  // Autocomplete fetch with AbortController — cancels in-flight requests on rapid typing
+  const fetchSuggestions = useCallback(async (q: string) => {
+    acAbortRef.current?.abort()
+    const controller = new AbortController()
+    acAbortRef.current = controller
+    setLoading(true)
+    try {
+      const data = await mapsApi.autocomplete(q, locale, undefined, controller.signal)
+      if (!controller.signal.aborted) {
+        setResults(data.suggestions || [])
+        setHighlight(-1)
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error && (err.name === 'AbortError' || err.name === 'CanceledError')) return
+      if (!controller.signal.aborted) setResults([])
+    } finally {
+      if (!controller.signal.aborted) setLoading(false)
+    }
+  }, [locale])
+
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
     const trimmed = query.trim()
-    if (trimmed.length < 3 || (value && trimmed === value.name)) {
+    if (trimmed.length < 2 || (value && trimmed === value.name)) {
       setResults([])
+      acAbortRef.current?.abort()
       return
     }
-    debounceRef.current = setTimeout(async () => {
-      setLoading(true)
-      try {
-        const data = await mapsApi.search(trimmed, locale)
-        setResults(data.places || [])
-        setHighlight(-1)
-      } catch {
-        setResults([])
-      } finally {
-        setLoading(false)
-      }
-    }, 320)
+    debounceRef.current = setTimeout(() => fetchSuggestions(trimmed), 300)
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
-  }, [query, value, locale])
+  }, [query, value, fetchSuggestions])
 
-  const pick = (r: any) => {
-    const lat = Number(r.lat)
-    const lng = Number(r.lng)
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return
-    const loc: LocationPoint = { name: r.name || r.address || 'Location', lat, lng, address: r.address || null }
-    onChange(loc)
-    setQuery(loc.name)
-    setOpen(false)
+  const pick = async (suggestion: AutocompleteSuggestion) => {
     setResults([])
+    setOpen(false)
+    setQuery(suggestion.mainText)
+    setLoading(true)
+
+    let loc: LocationPoint | null = null
+
+    // Try details first (cached, fast)
+    try {
+      const detail = await mapsApi.details(suggestion.placeId, locale)
+      if (detail.place?.lat != null && detail.place?.lng != null) {
+        loc = {
+          name: detail.place.name || suggestion.mainText,
+          lat: Number(detail.place.lat),
+          lng: Number(detail.place.lng),
+          address: detail.place.address || suggestion.secondaryText || null,
+        }
+      }
+    } catch { /* fall through to search fallback */ }
+
+    // Fallback: full text search if details didn't return coordinates
+    if (!loc) {
+      try {
+        const query = [suggestion.mainText, suggestion.secondaryText].filter(Boolean).join(', ')
+        const search = await mapsApi.search(query, locale)
+        const place = search.places?.[0]
+        if (place?.lat != null && place?.lng != null) {
+          loc = {
+            name: place.name || suggestion.mainText,
+            lat: Number(place.lat),
+            lng: Number(place.lng),
+            address: place.address || null,
+          }
+        }
+      } catch { /* both failed */ }
+    }
+
+    setLoading(false)
+
+    if (loc) {
+      onChange(loc)
+      setQuery(loc.name)
+    } else {
+      // Restore query if lookup failed
+      setQuery(suggestion.mainText)
+    }
   }
 
   const clear = () => {
@@ -114,7 +169,7 @@ export default function LocationSelect({ value, onChange, placeholder, style }: 
           )}
           {results.map((r, i) => (
             <button
-              key={`${r.osm_id || r.google_place_id || i}`}
+              key={`${r.placeId || i}`}
               type="button"
               onClick={() => pick(r)}
               onMouseEnter={() => setHighlight(i)}
@@ -127,9 +182,9 @@ export default function LocationSelect({ value, onChange, placeholder, style }: 
             >
               <MapPin size={12} className="text-content-faint" style={{ marginTop: 2, flexShrink: 0 }} />
               <span style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.name || r.address}</div>
-                {r.address && r.name !== r.address && (
-                  <div className="text-content-faint" style={{ fontSize: 11, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.address}</div>
+                <div style={{ fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.mainText}</div>
+                {r.secondaryText && (
+                  <div className="text-content-faint" style={{ fontSize: 11, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.secondaryText}</div>
                 )}
               </span>
             </button>

@@ -338,6 +338,59 @@ const POI_CACHE_TTL_MS = 5 * 60 * 1000;
 // without bound (entries are evicted oldest-first once the cap is reached).
 const POI_CACHE_MAX = 500;
 
+// ── Autocomplete cache (in-memory LRU) ──────────────────────────────────────
+// Caches Google autocomplete results so rapid typing / repeated prefixes don't
+// each hit the API. In-memory because autocomplete queries are ephemeral
+// prefixes ("res", "rest", "resta…") — writing each to SQLite would thrash the DB.
+const AC_CACHE = new Map<string, { at: number; value: { suggestions: { placeId: string; mainText: string; secondaryText: string }[]; source: string } }>();
+const AC_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+const AC_CACHE_MAX = 1000;
+
+function makeAcCacheKey(input: string, lang: string, locationBias?: { low: { lat: number; lng: number }; high: { lat: number; lng: number } }): string {
+  const norm = input.toLowerCase().trim().replace(/\s+/g, ' ');
+  const loc = locationBias
+    ? `${Math.round(locationBias.low.lat * 100)},${Math.round(locationBias.low.lng * 100)},${Math.round(locationBias.high.lat * 100)},${Math.round(locationBias.high.lng * 100)}`
+    : '';
+  return `${norm}|${lang}|${loc}`;
+}
+
+// ── Search cache (SQLite) ───────────────────────────────────────────────────
+// Caches full search results so repeated queries (same text + lang + area) hit
+// the DB instead of Google. 24h TTL; results carry full place objects worth keeping.
+const SEARCH_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const SEARCH_CACHE_MAX = 500;
+
+function makeSearchCacheKey(query: string, lang: string, locationBias?: { lat: number; lng: number; radius?: number }): string {
+  const norm = query.toLowerCase().trim().replace(/\s+/g, ' ');
+  const loc = locationBias
+    ? `${locationBias.lat.toFixed(1)},${locationBias.lng.toFixed(1)}`
+    : '';
+  return `${norm}|${lang}|${loc}`;
+}
+
+function getCachedSearch(key: string): { places: Record<string, unknown>[]; source: string } | null {
+  try {
+    const row = db.prepare('SELECT payload_json, source, fetched_at FROM place_search_cache WHERE cache_key = ?').get(key) as { payload_json: string; source: string; fetched_at: number } | undefined;
+    if (row && Date.now() - row.fetched_at < SEARCH_CACHE_TTL_MS) {
+      return { places: JSON.parse(row.payload_json), source: row.source };
+    }
+    if (row) db.prepare('DELETE FROM place_search_cache WHERE cache_key = ?').run(key);
+  } catch { /* ignore DB errors */ }
+  return null;
+}
+
+function cacheSearchResult(key: string, places: unknown[], source: string): void {
+  try {
+    const count = (db.prepare('SELECT COUNT(*) as c FROM place_search_cache').get() as { c: number }).c;
+    if (count >= SEARCH_CACHE_MAX) {
+      db.prepare('DELETE FROM place_search_cache WHERE cache_key IN (SELECT cache_key FROM place_search_cache ORDER BY fetched_at ASC LIMIT ?)').run(count - SEARCH_CACHE_MAX + 1);
+    }
+    db.prepare('INSERT OR REPLACE INTO place_search_cache (cache_key, payload_json, source, fetched_at) VALUES (?, ?, ?, ?)').run(key, JSON.stringify(places), source, Date.now());
+  } catch (e) {
+    console.error('Failed to cache search result:', e);
+  }
+}
+
 // POST the query to all mirrors at once and return the first one that answers with
 // valid JSON. Throws {status:502} only if every mirror fails. Racing (rather than
 // trying one-by-one) keeps latency at the fastest reachable mirror instead of the
@@ -609,13 +662,20 @@ export async function fetchWikimediaPhoto(lat: number, lng: number, name?: strin
 
 export async function searchPlaces(userId: number, query: string, lang?: string, locationBias?: { lat: number; lng: number; radius?: number }): Promise<{ places: Record<string, unknown>[]; source: string }> {
   const apiKey = getMapsKey(userId);
+  const langKey = toApiLang(lang);
+
+  // Check SQLite cache for both paths (Nominatim results are also worth caching)
+  const cacheKey = makeSearchCacheKey(query, langKey, locationBias);
+  const cached = getCachedSearch(cacheKey);
+  if (cached) return cached;
 
   if (!apiKey) {
     const places = await searchNominatim(query, lang);
+    cacheSearchResult(cacheKey, places, 'openstreetmap');
     return { places, source: 'openstreetmap' };
   }
 
-  const searchBody: Record<string, unknown> = { textQuery: query, languageCode: toApiLang(lang) };
+  const searchBody: Record<string, unknown> = { textQuery: query, languageCode: langKey };
   // Bias results toward the caller's area when supplied — without it Google Text
   // Search falls back to the API key's billing region, which skews foreign-region queries.
   if (locationBias) {
@@ -659,6 +719,7 @@ export async function searchPlaces(userId: number, query: string, lang?: string,
     source: 'google',
   }));
 
+  cacheSearchResult(cacheKey, places, 'google');
   return { places, source: 'google' };
 }
 
@@ -671,14 +732,21 @@ export async function autocompletePlaces(
   locationBias?: { low: { lat: number; lng: number }; high: { lat: number; lng: number } },
 ): Promise<{ suggestions: { placeId: string; mainText: string; secondaryText: string }[]; source: string }> {
   const apiKey = getMapsKey(userId);
+  const langKey = toApiLang(lang);
 
   if (!apiKey) {
     return autocompleteNominatim(input, lang);
   }
 
+  // Check in-memory LRU cache
+  const cacheKey = makeAcCacheKey(input, langKey, locationBias);
+  const cached = AC_CACHE.get(cacheKey);
+  if (cached && Date.now() - cached.at < AC_CACHE_TTL_MS) return cached.value;
+  if (cached) AC_CACHE.delete(cacheKey);
+
   const body: Record<string, unknown> = {
     input,
-    languageCode: toApiLang(lang),
+    languageCode: langKey,
   };
   if (locationBias) {
     body.locationBias = {
@@ -715,7 +783,13 @@ export async function autocompletePlaces(
       secondaryText: s.placePrediction!.structuredFormat?.secondaryText?.text || '',
     }));
 
-  return { suggestions, source: 'google' };
+  const result = { suggestions, source: 'google' };
+
+  // Store in LRU cache (FIFO eviction)
+  if (AC_CACHE.size >= AC_CACHE_MAX) AC_CACHE.delete(AC_CACHE.keys().next().value as string);
+  AC_CACHE.set(cacheKey, { at: Date.now(), value: result });
+
+  return result;
 }
 
 async function autocompleteNominatim(
@@ -824,6 +898,12 @@ export async function getPlaceDetails(userId: number, placeId: string, lang?: st
     ).run(placeId, langKey, JSON.stringify(place), Date.now());
   } catch (dbErr) {
     console.error('Failed to cache place details:', dbErr);
+  }
+
+  // Pre-warm nearby cache in background (fire-and-forget) so the next nearby
+  // request for this area is a free cache hit instead of a Google API call.
+  if (place.lat && place.lng) {
+    getNearbyPlaces(place.lat as number, place.lng as number, 1500, apiKey).catch(() => {});
   }
 
   return { place };

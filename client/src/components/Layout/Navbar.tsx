@@ -147,8 +147,16 @@ export default function Navbar({ tripTitle, tripId, onBack, showBack, onShare }:
           }}
         >
           {[{ id: '__trips', path: '/dashboard', label: t('nav.myTrips'), Icon: Briefcase },
-            ...globalAddons.map(a => ({ id: a.id, path: `/${a.id}`, label: getAddonName(a), Icon: ADDON_ICONS[a.icon] || CalendarDays })),
-            { id: '__russia', path: '/russia', label: 'Карта РФ', Icon: Globe },
+            ...(() => {
+              const idx = globalAddons.findIndex(a => a.id === 'atlas')
+              const before = idx >= 0 ? globalAddons.slice(0, idx + 1) : globalAddons
+              const after = idx >= 0 ? globalAddons.slice(idx + 1) : []
+              return [
+                ...before.map(a => ({ id: a.id, path: `/${a.id}`, label: getAddonName(a), Icon: ADDON_ICONS[a.icon] || CalendarDays })),
+                { id: '__russia', path: '/russia', label: 'Карта РФ', Icon: Globe },
+                ...after.map(a => ({ id: a.id, path: `/${a.id}`, label: getAddonName(a), Icon: ADDON_ICONS[a.icon] || CalendarDays })),
+              ]
+            })(),
           ].map(tab => {
             const isActive = location.pathname === tab.path
             return (

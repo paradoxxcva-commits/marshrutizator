@@ -51,14 +51,23 @@ export default function BottomNav() {
   const location = useLocation()
   const create = useCreateAction()
 
-  const items: NavItem[] = [
-    { to: '/dashboard', label: t('nav.myTrips'), icon: LayoutGrid },
-    ...globalAddons.flatMap(addon => {
-      const nav = ADDON_NAV[addon.id]
-      return nav ? [{ to: `/${addon.id}`, label: t(nav.labelKey), icon: nav.icon }] : []
-    }),
-    { to: '/russia', label: 'Карта РФ', icon: Globe },
-  ]
+  const items: NavItem[] = (() => {
+    const idx = globalAddons.findIndex(a => a.id === 'atlas')
+    const before = idx >= 0 ? globalAddons.slice(0, idx + 1) : globalAddons
+    const after = idx >= 0 ? globalAddons.slice(idx + 1) : []
+    return [
+      { to: '/dashboard', label: t('nav.myTrips'), icon: LayoutGrid },
+      ...before.flatMap(addon => {
+        const nav = ADDON_NAV[addon.id]
+        return nav ? [{ to: `/${addon.id}`, label: t(nav.labelKey), icon: nav.icon }] : []
+      }),
+      { to: '/russia', label: 'Карта РФ', icon: Globe },
+      ...after.flatMap(addon => {
+        const nav = ADDON_NAV[addon.id]
+        return nav ? [{ to: `/${addon.id}`, label: t(nav.labelKey), icon: nav.icon }] : []
+      }),
+    ]
+  })()
   // Split the items so the raised "+" sits dead centre.
   const splitAt = Math.ceil(items.length / 2)
   const left = items.slice(0, splitAt)
