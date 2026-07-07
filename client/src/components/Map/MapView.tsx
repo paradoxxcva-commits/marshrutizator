@@ -905,7 +905,7 @@ export const MapView = memo(function MapView({
       />
 
       {poiMarkers}
-      <MapSearchOverlay onPlaceSelect={onPlaceSelect} />
+      {/* <MapSearchOverlay onPlaceSelect={onPlaceSelect} /> -- moved to TripPlannerPage for GL map -- */}
     </MapContainer>
     </div>
 

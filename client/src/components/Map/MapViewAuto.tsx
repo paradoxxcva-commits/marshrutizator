@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react'
 
 // MapLibre GL-based map renderer (OpenFreeMap tiles, no token needed)
-const MapViewGL = lazy(() => import('./MapViewGL'))
+const MapViewGL = lazy(() => import('./MapViewGL').then(m => ({ default: m.MapViewGL })))
 
 /**
  * Map renderer — always uses MapLibre GL with OpenFreeMap tiles.
