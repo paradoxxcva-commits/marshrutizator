@@ -236,12 +236,12 @@ export function usePlacesSidebar(props: PlacesSidebarProps) {
 
   const openContextMenu = useCallback((e: React.MouseEvent, place: Place) => {
     const selDayId = selectedDayIdRef.current
-    const googleMapsUrl = getGoogleMapsUrlForPlace(place)
+    const gMapsUrl = getGoogleMapsUrlForPlace(place)
     ctxMenu.open(e, [
       canEditPlaces && { label: t('common.edit'), icon: Pencil, onClick: () => props.onEditPlace(place) },
       selDayId && { label: t('planner.addToDay'), icon: CalendarDays, onClick: () => props.onAssignToDay(place.id, selDayId) },
       place.website && { label: t('inspector.website'), icon: ExternalLink, onClick: () => window.open(place.website, '_blank') },
-      googleMapsUrl && { label: 'Google Maps', icon: Navigation, onClick: () => window.open(googleMapsUrl, '_blank') },
+      gMapsUrl && { label: 'Google Maps', icon: Navigation, onClick: () => window.open(gMapsUrl, '_blank') },
       { divider: true },
       canEditPlaces && { label: t('common.delete'), icon: Trash2, danger: true, onClick: () => props.onDeletePlace(place.id) },
     ])
