@@ -55,6 +55,7 @@ interface Props {
   showReservationStats?: boolean
   onReservationClick?: (reservationId: number) => void
   pois?: Poi[]
+  googlePois?: Poi[]
   onPoiClick?: (poi: Poi) => void
   onViewportChange?: (bbox: { south: number; west: number; north: number; east: number }) => void
   glProvider?: GlMapProvider
@@ -140,13 +141,13 @@ function createMarkerElement(place: Place & { category_color?: string; category_
 }
 
 // Small coloured pin for an OSM "explore" POI (matches the pill category colour).
-function createPoiMarkerElement(category: string): HTMLDivElement {
+function createPoiMarkerElement(category: string, borderColor: string = '#fff'): HTMLDivElement {
   const cat = POI_CATEGORY_BY_KEY[category]
   const color = cat?.color || '#6b7280'
   const svg = cat ? renderToStaticMarkup(createElement(cat.Icon, { size: 13, color: 'white', strokeWidth: 2.5 })) : ''
   const el = document.createElement('div')
   el.style.cssText = 'width:26px;height:26px;cursor:pointer;'
-  el.innerHTML = `<div style="width:26px;height:26px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;box-sizing:border-box;">${svg}</div>`
+  el.innerHTML = `<div style="width:26px;height:26px;border-radius:50%;background:${color};border:2px solid ${borderColor};box-shadow:0 1px 5px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;box-sizing:border-box;">${svg}</div>`
   return el
 }
 
@@ -172,6 +173,7 @@ export function MapViewGL({
   showReservationStats = false,
   onReservationClick,
   pois = [],
+  googlePois = [],
   onPoiClick,
   onViewportChange,
   glProvider = 'mapbox-gl',
@@ -547,6 +549,25 @@ export function MapViewGL({
       poiMarkersRef.current.push(m)
     }
   }, [pois, mapReady, glProvider])
+
+  // Google POI markers — separate layer with blue border
+  const googlePoiMarkersRef = useRef<any[]>([])
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !mapReady) return
+    googlePoiMarkersRef.current.forEach(m => m.remove())
+    googlePoiMarkersRef.current = []
+    for (const poi of (googlePois as Poi[])) {
+      const el = createPoiMarkerElement(poi.category, '#4285F4') // blue border for Google
+      el.addEventListener('mouseenter', () => {
+        popupRef.current?.setLngLat([poi.lng, poi.lat]).setHTML(buildPoiPopupHtml(poi)).addTo(map)
+      })
+      el.addEventListener('mouseleave', () => { popupRef.current?.remove() })
+      el.addEventListener('click', (ev) => { ev.stopPropagation(); onPoiClickRef.current?.(poi) })
+      const m = new gl.Marker({ element: el, anchor: 'center' }).setLngLat([poi.lng, poi.lat]).addTo(map)
+      googlePoiMarkersRef.current.push(m)
+    }
+  }, [googlePois, mapReady, glProvider])
 
   // Update route geojson
   useEffect(() => {

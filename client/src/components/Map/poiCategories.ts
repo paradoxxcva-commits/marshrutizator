@@ -39,5 +39,26 @@ export interface Poi {
   phone: string | null
   opening_hours: string | null
   cuisine: string | null
-  source: 'openstreetmap'
+  source: 'openstreetmap' | 'google'
+}
+
+// Map Google Places types to our category keys
+const GOOGLE_TO_CATEGORY: Record<string, string> = {
+  restaurant: 'restaurant', food: 'restaurant', meal_takeaway: 'restaurant', meal_delivery: 'restaurant',
+  cafe: 'cafe', bakery: 'cafe',
+  bar: 'bar', night_club: 'bar', pub: 'bar',
+  lodging: 'hotel', hostel: 'hotel', guest_house: 'hotel', apartment: 'hotel', motel: 'hotel',
+  tourist_attraction: 'sights', point_of_interest: 'sights',
+  museum: 'museum', art_gallery: 'museum',
+  park: 'nature', natural_feature: 'nature',
+  aquarium: 'activity', zoo: 'activity', theme_park: 'activity',
+}
+
+export function mapGoogleTypeToCategory(types?: string[]): string {
+  if (!types) return 'sights'
+  for (const t of types) {
+    const cat = GOOGLE_TO_CATEGORY[t]
+    if (cat) return cat
+  }
+  return 'sights'
 }
