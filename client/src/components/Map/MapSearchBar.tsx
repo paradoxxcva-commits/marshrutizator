@@ -84,7 +84,7 @@ export default function MapSearchBar({ flyTo }: Props) {
         setHistory(filtered)
       } catch {}
     } catch {}
-  }, [flyTo, onPlaceSelect])
+  }, [flyTo])
 
   const style: React.CSSProperties = {
     position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 1000,
