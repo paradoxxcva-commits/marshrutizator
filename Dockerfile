@@ -55,10 +55,11 @@ RUN apt-get update && \
     npm ci --workspace=server --omit=dev && \
     ARCH=$(dpkg --print-architecture) && \
     if [ "$ARCH" = "amd64" ]; then \
-        wget -qO /tmp/ki.tgz https://cdn.kde.org/ci-builds/pim/kitinerary/release-26.04/linux/kitinerary-extractor-x86_64-26.04.2.tgz && \
+        wget -qO /tmp/ki.tgz https://cdn.kde.org/ci-builds/pim/kitinerary/release-26.04/linux/kitinerary-extractor-x86_64-26.04.2.tgz 2>/dev/null && \
         echo "ba5cfb4a2353157c8f54cbeaea0097c5bf2c3a810e0342f63d6e524826176628 /tmp/ki.tgz" | sha256sum -c && \
         tar -xz -C /usr/local -f /tmp/ki.tgz bin/kitinerary-extractor share/locale && \
         rm /tmp/ki.tgz; \
+        echo "Kitinerary extractor: $([ -x /usr/local/bin/kitinerary-extractor ] && echo 'installed' || echo 'skipped (CDN unreachable)')"; \
     else \
         apt-get install -y --no-install-recommends libkitinerary-bin && \
         ln -sf "$(find /usr/lib -name kitinerary-extractor -type f | head -1)" /usr/local/bin/kitinerary-extractor; \
