@@ -124,7 +124,7 @@ interface PlaceInspectorProps {
   rightWidth?: number
 }
 
-export default function PlaceInspector({
+export default React.memo(function PlaceInspector({
   place, categories, days, selectedDayId, selectedAssignmentId, assignments, reservations = [],
   onClose, onEdit, onDelete, onAssignToDay, onRemoveAssignment,
   files, onFileUpload, tripMembers = [], onSetParticipants, onUpdatePlace,
@@ -141,7 +141,20 @@ export default function PlaceInspector({
   const [nameValue, setNameValue] = useState('')
   const nameInputRef = useRef(null)
   const fileInputRef = useRef(null)
-  const googleDetails = usePlaceDetails(place?.google_place_id, place?.osm_id, language)
+  ;(globalThis as any).__gd = usePlaceDetails(place?.google_place_id, place?.osm_id, language)
+  const category = categories?.find(c => c.id === place?.category_id)
+  const dayAssignments = selectedDayId ? (assignments[String(selectedDayId)] || []) : []
+  const assignmentInDay = selectedDayId && place
+    ? ((selectedAssignmentId ? dayAssignments.find(a => a.id === selectedAssignmentId) : null)
+      ?? dayAssignments.find(a => a.place?.id === place.id))
+    : null
+  const openingHours = (globalThis as any).__gd?.opening_hours || null
+  const openNow = (globalThis as any).__gd?.open_now ?? null
+  const selectedDay = days?.find(d => d.id === selectedDayId)
+  const weekdayIndex = getWeekdayIndex(selectedDay?.date)
+  const placeFiles = (files || []).filter(f => String(f.place_id) === String(place?.id) || (f.linked_place_ids || []).includes(place?.id))
+
+  if (!place) return null
 
   const startNameEdit = () => {
     if (!onUpdatePlace) return
@@ -162,24 +175,6 @@ export default function PlaceInspector({
     if (e.key === 'Enter') { e.preventDefault(); commitNameEdit() }
     if (e.key === 'Escape') setEditingName(false)
   }
-
-  if (!place) return null
-
-  const category = categories?.find(c => c.id === place.category_id)
-  const dayAssignments = selectedDayId ? (assignments[String(selectedDayId)] || []) : []
-  const assignmentInDay = selectedDayId
-    ? ((selectedAssignmentId ? dayAssignments.find(a => a.id === selectedAssignmentId) : null)
-      ?? dayAssignments.find(a => a.place?.id === place.id))
-    : null
-
-  const openingHours = googleDetails?.opening_hours || null
-  const openNow = googleDetails?.open_now ?? null
-  // Prefer the place's stored ftid; if it has none yet, use the one just fetched from Google.
-  // Inlined into JSX — Rolldown drops all const/let/useRef in this scope (Vite 8 bug)
-  const selectedDay = days?.find(d => d.id === selectedDayId)
-  const weekdayIndex = getWeekdayIndex(selectedDay?.date)
-
-  const placeFiles = (files || []).filter(f => String(f.place_id) === String(place.id) || (f.linked_place_ids || []).includes(place.id))
 
   const handleFileUpload = useCallback(async (e) => {
     const selectedFiles = Array.from((e.target as HTMLInputElement).files || [])
@@ -235,14 +230,14 @@ export default function PlaceInspector({
 
           {/* Info-Chips — hidden on mobile, shown on desktop */}
           <div className="hidden sm:flex" style={{ flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
-            {googleDetails?.rating && (() => {
-              const shortReview = (googleDetails.reviews || []).find(r => r.text && r.text.length > 5)
+            {(globalThis as any).__gd?.rating && (() => {
+              const shortReview = ((globalThis as any).__gd.reviews || []).find(r => r.text && r.text.length > 5)
               return (
                 <Chip
                   icon={<Star size={12} fill="#facc15" color="#facc15" />}
                   text={<>
-                    {googleDetails.rating.toFixed(1)}
-                    {googleDetails.rating_count ? <span style={{ opacity: 0.5 }}> ({googleDetails.rating_count.toLocaleString(locale)})</span> : ''}
+                    {(globalThis as any).__gd.rating.toFixed(1)}
+                    {(globalThis as any).__gd.rating_count ? <span style={{ opacity: 0.5 }}> ({(globalThis as any).__gd.rating_count.toLocaleString(locale)})</span> : ''}
                     {shortReview && <span className="hidden md:inline" style={{ opacity: 0.6, fontWeight: 400, fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}> · „{shortReview.text}"</span>}
                   </>}
                   color="var(--text-secondary)" bg="var(--bg-hover)"
@@ -255,20 +250,20 @@ export default function PlaceInspector({
           </div>
 
           {/* Telefon */}
-          {(place.phone || googleDetails?.phone) && (
+          {(place.phone || (globalThis as any).__gd?.phone) && (
             <div style={{ display: 'flex', gap: 12 }}>
-              <a href={`tel:${place.phone || googleDetails.phone}`}
+              <a href={`tel:${place.phone || (globalThis as any).__gd.phone}`}
                 className="text-content"
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, textDecoration: 'none' }}>
-                <Phone size={12} /> {place.phone || googleDetails.phone}
+                <Phone size={12} /> {place.phone || (globalThis as any).__gd.phone}
               </a>
             </div>
           )}
 
           {/* Description / Summary */}
-          {(place.description || googleDetails?.summary) && (
+          {(place.description || (globalThis as any).__gd?.summary) && (
             <div className="collab-note-md bg-surface-hover text-content-muted" style={{ borderRadius: 10, overflow: 'hidden', flexShrink: 0, fontSize: 12, lineHeight: '1.5', padding: '8px 12px', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
-              <Markdown remarkPlugins={[remarkGfm, remarkBreaks]}>{place.description || googleDetails?.summary || ''}</Markdown>
+              <Markdown remarkPlugins={[remarkGfm, remarkBreaks]}>{place.description || (globalThis as any).__gd?.summary || ''}</Markdown>
             </div>
           )}
 
@@ -303,12 +298,12 @@ export default function PlaceInspector({
               <ActionButton onClick={() => onAssignToDay(place.id)} variant="primary" icon={<Plus size={13} />} label={t('inspector.addToDay')} />
             )
           )}
-          {mapsUrl(place, googleDetails?.google_ftid, googleDetails?.google_maps_url) && (
-            <ActionButton onClick={() => window.open(mapsUrl(place, googleDetails?.google_ftid, googleDetails?.google_maps_url), '_blank')} variant="ghost" icon={<Navigation size={13} />}
+          {mapsUrl(place, (globalThis as any).__gd?.google_ftid, (globalThis as any).__gd?.google_maps_url) && (
+            <ActionButton onClick={() => window.open(mapsUrl(place, (globalThis as any).__gd?.google_ftid, (globalThis as any).__gd?.google_maps_url), '_blank')} variant="ghost" icon={<Navigation size={13} />}
               label={<span className="hidden sm:inline">{t('inspector.google')}</span>} />
           )}
-          {(place.website || googleDetails?.website) && (
-            <ActionButton onClick={() => window.open(place.website || googleDetails?.website, '_blank')} variant="ghost" icon={<ExternalLink size={13} />}
+          {(place.website || (globalThis as any).__gd?.website) && (
+            <ActionButton onClick={() => window.open(place.website || (globalThis as any).__gd?.website, '_blank')} variant="ghost" icon={<ExternalLink size={13} />}
               label={<span className="hidden sm:inline">{t('inspector.website')}</span>} />
           )}
           <div style={{ flex: 1 }} />
@@ -318,7 +313,7 @@ export default function PlaceInspector({
       </div>
     </div>
   )
-}
+})
 
 interface ChipProps {
   icon: React.ReactNode
@@ -573,10 +568,10 @@ function PlaceInspectorHeader({ openNow, place, category, t, editingName, nameIn
                 <span className="text-content-muted" style={{ fontSize: 12, lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{place.address}</span>
               </div>
             )}
-            {mapsUrl(place, googleDetails?.google_ftid, googleDetails?.google_maps_url) && (
+            {mapsUrl(place, (globalThis as any).__gd?.google_ftid, (globalThis as any).__gd?.google_maps_url) && (
               <div style={{ marginTop: 4 }}>
                 <a
-                  href={mapsUrl(place, googleDetails?.google_ftid, googleDetails?.google_maps_url)}
+                  href={mapsUrl(place, (globalThis as any).__gd?.google_ftid, (globalThis as any).__gd?.google_maps_url)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
@@ -873,6 +868,6 @@ function PlaceExtras({ openingHours, weekdayIndex, hoursExpanded, setHoursExpand
               )}
             </div>
           )}
-          </div>
+           </div>
   )
 }
