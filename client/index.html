@@ -46,10 +46,6 @@
   </head>
   <body>
     <div id="root"></div>
-    <script>
-    // Force-clear stale PWA caches — runs before SW can intercept
-    (async function(){try{var n=await caches.keys();await Promise.all(n.map(function(k){return caches.delete(k)}));var r=await navigator.serviceWorker.getRegistrations();await Promise.all(r.map(function(s){return s.unregister()}))}catch(e){}})();
-    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

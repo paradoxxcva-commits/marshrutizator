@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react'
 import { ErrorBoundary } from '../components/shared/ErrorBoundary'
 import ReactDOM from 'react-dom'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
@@ -11,7 +11,7 @@ import { MapCompassPill, type CompassMap } from '../components/Map/MapCompassPil
 import { getCached, fetchPhoto } from '../services/photoService'
 import DayPlanSidebar from '../components/Planner/DayPlanSidebar'
 import PlacesSidebar from '../components/Planner/PlacesSidebar'
-import PlaceInspector from '../components/Planner/PlaceInspector'
+const PlaceInspector = lazy(() => import('../components/Planner/PlaceInspector'))
 import DayDetailPanel from '../components/Planner/DayDetailPanel'
 import PlaceFormModal from '../components/Planner/PlaceFormModal'
 import TripFormModal from '../components/Trips/TripFormModal'
@@ -529,6 +529,7 @@ export default function TripPlannerPage(): React.ReactElement | null {
             })()}
 
             {selectedPlace && !isMobile && (
+              <Suspense fallback={null}>
               <PlaceInspector
                 place={selectedPlace}
                 categories={categories}
@@ -562,11 +563,13 @@ export default function TripPlannerPage(): React.ReactElement | null {
                 leftWidth={(isMobile || window.innerWidth < 900) ? 0 : (leftCollapsed ? 0 : leftWidth)}
                 rightWidth={(isMobile || window.innerWidth < 900) ? 0 : (rightCollapsed ? 0 : rightWidth)}
               />
+              </Suspense>
             )}
 
             {selectedPlace && isMobile && ReactDOM.createPortal(
               <div className="bg-[rgba(0,0,0,0.3)]" style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 'var(--bottom-nav-h)' }} onClick={() => setSelectedPlaceId(null)}>
                 <div style={{ width: '100%', maxHeight: '85vh' }} onClick={e => e.stopPropagation()}>
+                  <Suspense fallback={null}>
                   <PlaceInspector
                     place={selectedPlace}
                     categories={categories}
@@ -600,6 +603,7 @@ export default function TripPlannerPage(): React.ReactElement | null {
                     leftWidth={0}
                     rightWidth={0}
                   />
+                  </Suspense>
                 </div>
               </div>,
               document.body
