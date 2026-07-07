@@ -685,7 +685,7 @@ export const MapView = memo(function MapView({
       position={[poi.lat, poi.lng]}
       icon={createPoiIcon(poi.category)}
       zIndexOffset={500}
-      eventHandlers={{ click: () => onPoiClick?.(poi) }}
+      eventHandlers={{ click: (e) => { L.DomEvent.stopPropagation(e.originalEvent); onPoiClick?.(poi) } }}
     >
       <Tooltip direction="top" offset={[0, -10]} opacity={1} className="map-tooltip">{poi.name}</Tooltip>
     </Marker>
