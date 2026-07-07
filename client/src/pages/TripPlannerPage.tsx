@@ -52,7 +52,7 @@ import { usePoiExplore } from '../components/Map/usePoiExplore'
 import PoiCategoryPill from '../components/Map/PoiCategoryPill'
 import MapStyleToggle from '../components/Map/MapStyleToggle'
 import MapSearchBar from '../components/Map/MapSearchBar'
-import PlacePreviewCard from '../components/Map/PlacePreviewCard'
+const PlacePreviewCard = lazy(() => import('../components/Map/PlacePreviewCard'))
 
 function ListsContainer({ tripId, packingItems, todoItems }: { tripId: number; packingItems: PackingItem[]; todoItems: TodoItem[] }) {
   const [subTab, setSubTab] = useState<'packing' | 'todo'>(() => {
@@ -542,11 +542,13 @@ export default function TripPlannerPage(): React.ReactElement | null {
 
             {/* POI preview card — shown when clicking explore markers */}
             {selectedPoi && !selectedPlace && (
-              <PlacePreviewCard
-                poi={selectedPoi}
-                onAdd={() => addPoiToTrip(selectedPoi)}
-                onClose={() => setSelectedPoi(null)}
-              />
+              <Suspense fallback={null}>
+                <PlacePreviewCard
+                  poi={selectedPoi}
+                  onAdd={() => addPoiToTrip(selectedPoi)}
+                  onClose={() => setSelectedPoi(null)}
+                />
+              </Suspense>
             )}
 
             {selectedPlace && !isMobile && (
