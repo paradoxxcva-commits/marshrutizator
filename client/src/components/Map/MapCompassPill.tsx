@@ -1,29 +1,16 @@
-import { useEffect, useState } from 'react'
 import { Navigation } from 'lucide-react'
 
-export interface CompassMap {
-  getBearing: () => number
-  on: (type: 'rotate', listener: () => void) => unknown
-  off: (type: 'rotate', listener: () => void) => unknown
-  easeTo: (options: { bearing: number; pitch: number; duration: number }) => unknown
-}
-
 /**
- * Round compass pill for the GL planner map. The map can be rotated and
- * pitched, so this shows the current bearing (the arrow points to north) and snaps
- * the camera back to north + flat on click. Rendered next to the POI "explore" pill
- * (GL only) and built as the SAME frosted shell (padding 4 around a 34px button)
- * so its height and transparency match the POI pill exactly.
+ * Compass pill for the Google Maps planner map. Resets heading to north on click.
+ * Google Maps doesn't support rotation like MapLibre, so this just resets tilt.
  */
-export function MapCompassPill({ map }: { map: CompassMap }) {
-  const [bearing, setBearing] = useState(() => map.getBearing())
-
-  useEffect(() => {
-    const update = () => setBearing(map.getBearing())
-    update()
-    map.on('rotate', update)
-    return () => { map.off('rotate', update) }
-  }, [map])
+export function MapCompassPill({ map }: { map: any }) {
+  const resetNorth = () => {
+    if (!map) return
+    // Google Maps: reset tilt and heading
+    map.setTilt(0)
+    map.setHeading(0)
+  }
 
   return (
     <div style={{
@@ -35,7 +22,7 @@ export function MapCompassPill({ map }: { map: CompassMap }) {
     }}>
       <button
         type="button"
-        onClick={() => map.easeTo({ bearing: 0, pitch: 0, duration: 300 })}
+        onClick={resetNorth}
         aria-label="Reset north"
         className="text-content-muted"
         style={{
@@ -47,7 +34,7 @@ export function MapCompassPill({ map }: { map: CompassMap }) {
         onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-hover)' }}
         onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
       >
-        <Navigation size={16} strokeWidth={2} style={{ transform: `rotate(${-bearing}deg)`, transition: 'transform 0.1s linear' }} />
+        <Navigation size={16} strokeWidth={2} />
       </button>
     </div>
   )
