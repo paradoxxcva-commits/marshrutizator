@@ -1,13 +1,11 @@
-import { MapPin, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 
 interface Props {
   enabled: boolean
   loading: boolean
-  remainingRequests: number | null
   onToggle: () => void
 }
 
-// Google "G" icon as inline SVG
 function GoogleIcon({ size = 14 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -19,7 +17,7 @@ function GoogleIcon({ size = 14 }: { size?: number }) {
   )
 }
 
-export default function GooglePoiPill({ enabled, loading, remainingRequests, onToggle }: Props) {
+export default function GooglePoiPill({ enabled, loading, onToggle }: Props) {
   return (
     <button
       onClick={onToggle}
@@ -28,28 +26,17 @@ export default function GooglePoiPill({ enabled, loading, remainingRequests, onT
         padding: '6px 12px', borderRadius: 99,
         border: enabled ? '1.5px solid #4285F4' : '1px solid var(--border-primary)',
         background: enabled ? 'rgba(66,133,244,0.12)' : 'var(--bg-card)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+        boxShadow: enabled ? 'none' : '0 1px 2px rgba(0,0,0,0.06)',
         color: enabled ? '#4285F4' : 'var(--text-secondary)',
         fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
-        boxShadow: enabled ? 'none' : '0 1px 2px rgba(0,0,0,0.06)',
         transition: 'all 0.15s',
         pointerEvents: 'auto',
       }}
     >
-      {loading ? (
-        <Loader2 size={14} className="animate-spin" />
-      ) : (
-        <GoogleIcon size={14} />
-      )}
+      {loading ? <Loader2 size={14} className="animate-spin" /> : <GoogleIcon size={14} />}
       <span>Google</span>
-      {remainingRequests !== null && (
-        <span style={{
-          fontSize: 9, fontWeight: 600, padding: '1px 5px', borderRadius: 99,
-          background: remainingRequests < 10 ? 'rgba(239,68,68,0.15)' : 'rgba(66,133,244,0.1)',
-          color: remainingRequests < 10 ? '#EF4444' : '#4285F4',
-        }}>
-          {remainingRequests}/90
-        </span>
-      )}
     </button>
   )
 }

@@ -122,12 +122,12 @@ export default function PlacePreviewCard({ poi, onAdd, onClose }: Props) {
             <Phone size={12} /> Позвонить
           </a>
         )}
-        <a href={`https://www.google.com/maps/dir/?api=1&destination=${poi.lat},${poi.lng}`}
+        <a href={poi.google_maps_url || `https://www.google.com/maps/search/?api=1&query=${poi.lat},${poi.lng}`}
           target="_blank" rel="noopener noreferrer"
           style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 12px',
             borderRadius: 8, border: '1px solid var(--border-primary)', background: 'transparent',
             color: 'var(--text-secondary)', fontSize: 12, textDecoration: 'none', cursor: 'pointer' }}>
-          <Navigation size={12} /> Маршрут
+          <Navigation size={12} /> Google Maps
         </a>
         <div style={{ flex: 1 }} />
         <button onClick={onAdd} style={{

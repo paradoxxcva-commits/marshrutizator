@@ -18,11 +18,13 @@ function isAbortError(err: unknown): boolean {
 }
 
 function placeToPoi(p: NearbyPlaceResult): Poi {
+  const lat = p.geometry.location.lat
+  const lng = p.geometry.location.lng
   return {
     osm_id: `google:${p.place_id}`,
     name: p.name,
-    lat: p.geometry.location.lat,
-    lng: p.geometry.location.lng,
+    lat,
+    lng,
     category: mapGoogleTypeToCategory(p.types),
     poi_type: p.types?.[0] || 'point_of_interest',
     address: p.vicinity || null,
@@ -31,6 +33,7 @@ function placeToPoi(p: NearbyPlaceResult): Poi {
     opening_hours: p.opening_hours?.open_now ? 'Открыто' : null,
     cuisine: null,
     source: 'google',
+    google_maps_url: `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
   }
 }
 
@@ -38,12 +41,11 @@ export function useGooglePoiExplore() {
   const [googlePois, setGooglePois] = useState<Poi[]>([])
   const [enabled, setEnabled] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [remainingRequests, setRemainingRequests] = useState<number | null>(null)
   const abortRef = useRef<AbortController | null>(null)
+  const viewportRef = useRef<{ lat: number; lng: number } | null>(null)
   const lastFetchRef = useRef<{ lat: number; lng: number } | null>(null)
 
   const fetchNearby = useCallback(async (lat: number, lng: number) => {
-    // Don't refetch if within 500m of last fetch
     if (lastFetchRef.current) {
       const dlat = Math.abs(lat - lastFetchRef.current.lat)
       const dlng = Math.abs(lng - lastFetchRef.current.lng)
@@ -56,13 +58,8 @@ export function useGooglePoiExplore() {
     try {
       const data = await mapsApi.nearby(lat, lng, 2000)
       if (ctrl.signal.aborted) return
-      const pois = (data.places || []).map(placeToPoi)
-      setGooglePois(pois)
+      setGooglePois((data.places || []).map(placeToPoi))
       lastFetchRef.current = { lat, lng }
-      // Track remaining requests (90/day limit, cached responses don't count)
-      if (data.source === 'google') {
-        setRemainingRequests(prev => prev !== null ? Math.max(0, prev - 1) : 89)
-      }
     } catch (err) {
       if (!isAbortError(err)) {
         console.error('[GooglePoi] fetch failed:', err)
@@ -74,22 +71,24 @@ export function useGooglePoiExplore() {
   }, [])
 
   const onViewportChange = useCallback((bbox: { south: number; west: number; north: number; east: number }) => {
+    viewportRef.current = { lat: (bbox.south + bbox.north) / 2, lng: (bbox.west + bbox.east) / 2 }
     if (!enabled) return
-    const centerLat = (bbox.south + bbox.north) / 2
-    const centerLng = (bbox.west + bbox.east) / 2
-    fetchNearby(centerLat, centerLng)
+    fetchNearby(viewportRef.current.lat, viewportRef.current.lng)
   }, [enabled, fetchNearby])
 
   const toggle = useCallback(() => {
     setEnabled(prev => {
       const next = !prev
+      if (next && viewportRef.current) {
+        fetchNearby(viewportRef.current.lat, viewportRef.current.lng)
+      }
       if (!next) {
         setGooglePois([])
         abortRef.current?.abort()
       }
       return next
     })
-  }, [])
+  }, [fetchNearby])
 
-  return { googlePois, enabled, toggle, loading, remainingRequests, onViewportChange }
+  return { googlePois, enabled, toggle, loading, onViewportChange }
 }

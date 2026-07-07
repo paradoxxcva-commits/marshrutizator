@@ -350,7 +350,7 @@ export default function TripPlannerPage(): React.ReactElement | null {
 
             {(poiPillEnabled || glMap) && (
               <div className="hidden md:flex" style={{ position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 25, pointerEvents: 'none', alignItems: 'flex-start', gap: 8 }}>
-                <GooglePoiPill enabled={googlePoi.enabled} loading={googlePoi.loading} remainingRequests={googlePoi.remainingRequests} onToggle={googlePoi.toggle} />
+                <GooglePoiPill enabled={googlePoi.enabled} loading={googlePoi.loading} onToggle={googlePoi.toggle} />
                 {poiPillEnabled && (
                   <PoiCategoryPill active={poi.active} onToggle={poi.toggle} loadingKeys={poi.loadingKeys} errorKeys={poi.errorKeys} moved={poi.moved} onSearchArea={poi.searchArea} />
                 )}

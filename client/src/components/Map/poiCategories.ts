@@ -40,6 +40,7 @@ export interface Poi {
   opening_hours: string | null
   cuisine: string | null
   source: 'openstreetmap' | 'google'
+  google_maps_url?: string
 }
 
 // Map Google Places types to our category keys
