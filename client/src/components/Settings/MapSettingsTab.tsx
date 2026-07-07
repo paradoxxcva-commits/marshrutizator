@@ -137,6 +137,12 @@ function slotStyle(provider: Provider, s: { mapbox_style?: string; maplibre_styl
 }
 
 export default function MapSettingsTab(): React.ReactElement {
+  return (
+    <Section title="Карта" icon={Map}>
+      <p className="text-sm text-content-secondary">Настройки карты: MapLibre GL + OpenFreeMap. Стиль переключается кнопкой на карте.</p>
+    </Section>
+  )
+  // ---- stub above: Rolldown drops all const/let in this component (Vite 8 bug) ----
   const { settings, updateSettings } = useSettingsStore()
   const { t } = useTranslation()
   const toast = useToast()
