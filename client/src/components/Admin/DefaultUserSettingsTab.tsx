@@ -354,102 +354,32 @@ export default function DefaultUserSettingsTab(): React.ReactElement {
         </div>
       </div>
 
-      {/* ── Map provider / instance-wide Mapbox ───────────────────────── */}
+      {/* ── Map style (MapLibre GL / OpenFreeMap) ─────────────────────── */}
       <div style={{ borderTop: '1px solid var(--border-primary)', paddingTop: 20, marginTop: 4 }}>
         <OptionRow
-          label={<>{t('admin.defaultSettings.mapProvider')} <ResetButton field="map_provider" /></>}
-          hint={t('admin.defaultSettings.mapProviderHint')}
+          label={<>{t('admin.defaultSettings.mapboxStyle')} <ResetButton field={styleKey} /></>}
         >
-          {([
-            { value: 'maplibre-gl', label: t('admin.defaultSettings.providerMapLibre') },
-            { value: 'mapbox-gl', label: t('admin.defaultSettings.providerMapbox') },
-          ] as const).map(opt => (
-            <OptionButton
-              key={opt.value}
-              active={mapProvider === opt.value}
-              onClick={() => saveMapProvider(opt.value)}
-            >
-              {opt.label}
-            </OptionButton>
-          ))}
+          <CustomSelect
+            value={mapboxStyle}
+            onChange={(value: string) => { if (value) { setMapboxStyle(value); save({ [styleKey]: value }) } }}
+            placeholder={t('admin.defaultSettings.mapboxStylePlaceholder')}
+            options={glStylePresets.map(p => ({ value: p.url, label: p.name }))}
+            size="sm"
+            style={{ marginBottom: 8 }}
+          />
+          <input
+            type="text"
+            value={mapboxStyle}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMapboxStyle(e.target.value)}
+            onBlur={() => {
+              const nextStyle = normalizeStyleForProvider('maplibre-gl', mapboxStyle)
+              setMapboxStyle(nextStyle)
+              save({ [styleKey]: nextStyle })
+            }}
+            placeholder={defaultStyleForProvider('maplibre-gl')}
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-slate-400 focus:border-transparent"
+          />
         </OptionRow>
-
-        {mapProvider && (
-          <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 18 }}>
-            {mapProvider === 'mapbox-gl' && (
-            <div>
-              <label className="block text-sm font-medium mb-1.5 text-content-secondary">
-                {t('admin.defaultSettings.mapboxToken')}
-                <ResetButton field="mapbox_access_token" />
-              </label>
-              <input
-                type="text"
-                value={mapboxToken}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMapboxToken(e.target.value)}
-                onBlur={() => save({ mapbox_access_token: mapboxToken })}
-                placeholder="pk.eyJ…"
-                spellCheck={false}
-                autoComplete="off"
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-slate-400 focus:border-transparent"
-              />
-              <p className="text-xs mt-1 text-content-faint">{t('admin.defaultSettings.mapboxTokenHint')}</p>
-            </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium mb-1.5 text-content-secondary">
-                {t('admin.defaultSettings.mapboxStyle')}
-                <ResetButton field={styleKey} />
-              </label>
-              <CustomSelect
-                value={mapboxStyle}
-                onChange={(value: string) => { if (value) { setMapboxStyle(value); save({ [styleKey]: value }) } }}
-                placeholder={t('admin.defaultSettings.mapboxStylePlaceholder')}
-                options={glStylePresets.map(p => ({ value: p.url, label: p.name }))}
-                size="sm"
-                style={{ marginBottom: 8 }}
-              />
-              <input
-                type="text"
-                value={mapboxStyle}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMapboxStyle(e.target.value)}
-                onBlur={() => {
-                  const nextStyle = normalizeStyleForProvider(mapProvider, mapboxStyle)
-                  setMapboxStyle(nextStyle)
-                  save({ [styleKey]: nextStyle })
-                }}
-                placeholder={defaultStyleForProvider(mapProvider)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-slate-400 focus:border-transparent"
-              />
-            </div>
-
-            {mapProvider === 'mapbox-gl' && (
-            <>
-            <OptionRow label={<>{t('admin.defaultSettings.mapbox3d')} <ResetButton field="mapbox_3d_enabled" /></>}>
-              {([
-                { value: true, label: t('settings.on') || 'On' },
-                { value: false, label: t('settings.off') || 'Off' },
-              ] as const).map(opt => (
-                <OptionButton key={String(opt.value)} active={(defaults.mapbox_3d_enabled ?? true) === opt.value} onClick={() => save({ mapbox_3d_enabled: opt.value })}>
-                  {opt.label}
-                </OptionButton>
-              ))}
-            </OptionRow>
-
-            <OptionRow label={<>{t('admin.defaultSettings.mapboxQuality')} <ResetButton field="mapbox_quality_mode" /></>}>
-              {([
-                { value: true, label: t('settings.on') || 'On' },
-                { value: false, label: t('settings.off') || 'Off' },
-              ] as const).map(opt => (
-                <OptionButton key={String(opt.value)} active={(defaults.mapbox_quality_mode ?? false) === opt.value} onClick={() => save({ mapbox_quality_mode: opt.value })}>
-                  {opt.label}
-                </OptionButton>
-              ))}
-            </OptionRow>
-            </>
-            )}
-          </div>
-        )}
       </div>
     </Section>
   )

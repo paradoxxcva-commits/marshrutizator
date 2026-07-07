@@ -1,21 +1,15 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { Map, Save, Layers, Box, ChevronDown, Check, Globe2, MapPin } from 'lucide-react'
+import { Map, Save, Layers, ChevronDown, Check } from 'lucide-react'
 import { useTranslation } from '../../i18n'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useToast } from '../shared/Toast'
 import CustomSelect from '../shared/CustomSelect'
-import { MapViewGL } from '../Map/MapViewGL'
-import MapViewGoogle from '../Map/MapViewGoogle'
-import GlMapPreview from './MapboxPreview'
 import Section from './Section'
 import ToggleSwitch from './ToggleSwitch'
 import type { Place } from '../../types'
 import {
-  MAPBOX_DEFAULT_STYLE,
   defaultStyleForProvider,
   getStylePresets,
-  type GlMapProvider,
-  isOpenFreeMapStyle,
   normalizeStyleForProvider,
   type GlMapProvider,
 } from '../Map/glProviders'
@@ -133,7 +127,6 @@ function normalizeProvider(value: unknown): Provider {
 }
 
 function styleForProvider(provider: Provider, style?: string | null): string {
-  if (provider === 'mapbox-gl' && isOpenFreeMapStyle(style)) return MAPBOX_DEFAULT_STYLE
   return normalizeStyleForProvider(provider, style)
 }
 
@@ -232,159 +225,25 @@ export default function MapSettingsTab(): React.ReactElement {
 
   return (
     <Section title={t('settings.map')} icon={Map}>
-      {/* Provider picker — big cards so the choice is obvious */}
+      {/* Style selector — MapLibre GL with OpenFreeMap presets */}
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-2">{t('settings.mapProvider')}</label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => changeProvider('maplibre-gl')}
-            className={`relative flex items-start gap-3 p-3 rounded-lg border text-left transition-colors ${
-              provider === 'maplibre-gl'
-                ? 'border-slate-900 bg-slate-50 dark:bg-slate-800 dark:border-slate-200'
-                : 'border-slate-200 hover:border-slate-400 dark:border-slate-700'
-            }`}
-          >
-            <Globe2 size={18} className="mt-0.5 flex-shrink-0 text-slate-700 dark:text-slate-300" />
-            <div className="min-w-0">
-              <div className="text-sm font-medium text-slate-900 dark:text-white">
-                <span className="sm:hidden">MapLibre</span>
-                <span className="hidden sm:inline">MapLibre GL</span>
-              </div>
-              <div className="hidden sm:block text-xs text-slate-500 mt-0.5">{t('settings.mapMapLibreSubtitle')}</div>
-            </div>
-            <span className="hidden sm:inline-block absolute top-2 right-2 text-[9px] font-semibold tracking-wide uppercase px-1.5 py-[3px] rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 leading-none">
-              По умолчанию
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => changeProvider('mapbox-gl')}
-            className={`relative flex items-start gap-3 p-3 rounded-lg border text-left transition-colors ${
-              provider === 'mapbox-gl'
-                ? 'border-slate-900 bg-slate-50 dark:bg-slate-800 dark:border-slate-200'
-                : 'border-slate-200 hover:border-slate-400 dark:border-slate-700'
-            }`}
-          >
-            <Box size={18} className="mt-0.5 flex-shrink-0 text-slate-700 dark:text-slate-300" />
-            <div className="min-w-0">
-              <div className="text-sm font-medium text-slate-900 dark:text-white">
-                <span className="sm:hidden">Mapbox</span>
-                <span className="hidden sm:inline">Mapbox GL</span>
-              </div>
-              <div className="hidden sm:block text-xs text-slate-500 mt-0.5">{t('settings.mapMapboxSubtitle')}</div>
-            </div>
-            <span className="hidden sm:inline-block absolute top-2 right-2 text-[9px] font-semibold tracking-wide uppercase px-1.5 py-[3px] rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 leading-none">
-              {t('settings.mapExperimental')}
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => changeProvider('google-maps')}
-            className={`relative flex items-start gap-3 p-3 rounded-lg border text-left transition-colors ${
-              provider === 'google-maps'
-                ? 'border-slate-900 bg-slate-50 dark:bg-slate-800 dark:border-slate-200'
-                : 'border-slate-200 hover:border-slate-400 dark:border-slate-700'
-            }`}
-          >
-            <MapPin size={18} className="mt-0.5 flex-shrink-0 text-slate-700 dark:text-slate-300" />
-            <div className="min-w-0">
-              <div className="text-sm font-medium text-slate-900 dark:text-white">
-                <span className="sm:hidden">Google</span>
-                <span className="hidden sm:inline">Google Maps</span>
-              </div>
-              <div className="hidden sm:block text-xs text-slate-500 mt-0.5">{t('settings.mapGoogleSubtitle')}</div>
-            </div>
-          </button>
+        <label className="block text-sm font-medium text-slate-700 mb-1.5">{t('settings.mapStyle')}</label>
+        <div className="mb-2">
+          <StyleDropdown value={mapboxStyle} provider={provider} onChange={setMapboxStyle} />
         </div>
-        <p className="text-xs text-slate-400 mt-2">
-          {t('settings.mapProviderHint')}
+        <input
+          type="text"
+          value={mapboxStyle}
+          onChange={(e) => setMapboxStyle(e.target.value)}
+          placeholder={defaultStyleForProvider(provider)}
+          className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-slate-400 focus:border-transparent"
+        />
+        <p className="text-xs text-slate-400 mt-1">
+          {t('settings.mapOpenFreeMapStyleHint')}
         </p>
       </div>
 
-      {/* GL settings — hidden for Google Maps */}
-      {provider && provider !== 'google-maps' && (
-        <div className="space-y-3">
-          {provider === 'mapbox-gl' && (
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">{t('settings.mapMapboxToken')}</label>
-            <input
-              type="text"
-              value={mapboxToken}
-              onChange={(e) => setMapboxToken(e.target.value)}
-              placeholder="pk.eyJ1Ijoi..."
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-slate-400 focus:border-transparent"
-            />
-            <p className="text-xs text-slate-400 mt-1">
-              {t('settings.mapMapboxTokenHint')}{' '}
-              <a href="https://account.mapbox.com/access-tokens/" target="_blank" rel="noreferrer" className="underline">
-                {t('settings.mapMapboxTokenLink')}
-              </a>
-            </p>
-          </div>
-          )}
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">{t('settings.mapStyle')}</label>
-            <div className="mb-2">
-              <StyleDropdown value={mapboxStyle} provider={provider} onChange={setMapboxStyle} />
-            </div>
-            <input
-              type="text"
-              value={mapboxStyle}
-              onChange={(e) => setMapboxStyle(e.target.value)}
-              placeholder={defaultStyleForProvider(provider)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-slate-400 focus:border-transparent"
-            />
-            <p className="text-xs text-slate-400 mt-1">
-              {provider === 'maplibre-gl' ? t('settings.mapOpenFreeMapStyleHint') : t('settings.mapStyleHint')}
-            </p>
-          </div>
-
-          {provider === 'mapbox-gl' && (
-          <>
-          <div className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${
-            supports3d
-              ? 'border-slate-200 dark:border-slate-700'
-              : 'border-slate-200 opacity-60 dark:border-slate-700'
-          }`}>
-            <div className="flex-1">
-              <div className="text-sm font-medium text-slate-900 dark:text-white">{t('settings.map3dBuildings')}</div>
-              <div className="text-xs text-slate-500 mt-0.5">
-                {t('settings.map3dHint')}
-              </div>
-            </div>
-            <ToggleSwitch
-              on={mapbox3d && supports3d}
-              onToggle={() => { if (supports3d) setMapbox3d(!mapbox3d) }}
-            />
-          </div>
-
-          <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
-            <div className="flex-1">
-              <div className="text-sm font-medium text-slate-900 dark:text-white flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:gap-2">
-                <span className="order-2 sm:order-1">{t('settings.mapHighQuality')}</span>
-                <span className="order-1 sm:order-2 text-[9px] font-semibold tracking-wide uppercase px-1.5 py-[3px] rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 leading-none">
-                  {t('settings.mapExperimental')}
-                </span>
-              </div>
-              <div className="text-xs text-slate-500 mt-0.5">
-                {t('settings.mapHighQualityHint')}{' '}
-                <span className="text-amber-600 dark:text-amber-400">{t('settings.mapHighQualityWarning')}</span>
-              </div>
-            </div>
-            <ToggleSwitch on={mapboxQuality} onToggle={() => setMapboxQuality(!mapboxQuality)} />
-          </div>
-
-          <div className="text-xs text-slate-400 p-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-            <strong className="text-slate-600 dark:text-slate-300">{t('settings.mapTipLabel')}</strong> {t('settings.mapTip')}
-          </div>
-          </>
-          )}
-        </div>
-      )}
-
-      {/* Default map position — applies regardless of provider */}
+      {/* Default map position */}
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1.5">{t('settings.latitude')}</label>
