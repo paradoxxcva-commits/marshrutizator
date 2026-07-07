@@ -166,7 +166,8 @@ export default function PlaceInspector({
   const openingHours = googleDetails?.opening_hours || null
   const openNow = googleDetails?.open_now ?? null
   // Prefer the place's stored ftid; if it has none yet, use the one just fetched from Google.
-  const gMapsUrl = getGoogleMapsUrlForPlace(
+  const gMapsRef = useRef<string | null>(null)
+  gMapsRef.current = getGoogleMapsUrlForPlace(
     place ? { ...place, google_ftid: place.google_ftid || googleDetails?.google_ftid || null } : null,
     googleDetails?.google_maps_url,
   )
@@ -297,8 +298,8 @@ export default function PlaceInspector({
               <ActionButton onClick={() => onAssignToDay(place.id)} variant="primary" icon={<Plus size={13} />} label={t('inspector.addToDay')} />
             )
           )}
-          {gMapsUrl && (
-            <ActionButton onClick={() => window.open(gMapsUrl, '_blank')} variant="ghost" icon={<Navigation size={13} />}
+          {gMapsRef.current && (
+            <ActionButton onClick={() => window.open(gMapsRef.current, '_blank')} variant="ghost" icon={<Navigation size={13} />}
               label={<span className="hidden sm:inline">{t('inspector.google')}</span>} />
           )}
           {(place.website || googleDetails?.website) && (
@@ -567,10 +568,10 @@ function PlaceInspectorHeader({ openNow, place, category, t, editingName, nameIn
                 <span className="text-content-muted" style={{ fontSize: 12, lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{place.address}</span>
               </div>
             )}
-            {gMapsUrl && (
+            {gMapsRef.current && (
               <div style={{ marginTop: 4 }}>
                 <a
-                  href={gMapsUrl}
+                  href={gMapsRef.current}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
