@@ -127,6 +127,7 @@ export function useTripPlanner() {
   const [editingPlace, setEditingPlace] = useState<Place | null>(null)
   const [prefillCoords, setPrefillCoords] = useState<{ lat: number; lng: number; name?: string; address?: string; website?: string; phone?: string; osm_id?: string; google_place_id?: string } | null>(null)
   const [editingAssignmentId, setEditingAssignmentId] = useState<number | null>(null)
+  const [selectedPoi, setSelectedPoi] = useState<any>(null)
   const [searchParams, setSearchParams] = useSearchParams()
 
   // The bottom-nav "+" opens the new-place form via ?create=place.
@@ -365,9 +366,15 @@ export function useTripPlanner() {
   }, [language])
 
   // Open the Add-Place form pre-filled from an OSM "explore" POI marker — all the
-  // data already comes from the POI, so no reverse-geocode is needed.
-  const openAddPlaceFromPoi = useCallback((poi: { lat: number; lng: number; name: string; address: string | null; website: string | null; phone: string | null; osm_id: string }) => {
+  // POI click → show preview card (not PlaceFormModal directly)
+  const openAddPlaceFromPoi = useCallback((poi: any) => {
     if (!can('place_edit', trip)) return
+    setSelectedPlaceId(null)
+    setSelectedPoi(poi)
+  }, [trip])
+
+  // "Add to trip" from PlacePreviewCard → open PlaceFormModal with prefill
+  const addPoiToTrip = useCallback((poi: any) => {
     setPrefillCoords({
       lat: poi.lat,
       lng: poi.lng,
@@ -380,7 +387,8 @@ export function useTripPlanner() {
     setEditingPlace(null)
     setEditingAssignmentId(null)
     setShowPlaceForm(true)
-  }, [trip])
+    setSelectedPoi(null)
+  }, [])
 
   // Open the Add-Place form pre-filled from a Google Places search result
   const openAddPlaceFromSearch = useCallback((place: { lat: number; lng: number; name: string; address: string; google_place_id: string }) => {
@@ -721,5 +729,6 @@ export function useTripPlanner() {
     handleSaveReservation, handleSaveTransport, handleDeleteReservation,
     selectedPlace, dayOrderMap, dayPlaces,
     mapTileUrl, defaultCenter, defaultZoom, fontStyle, splashDone,
+    selectedPoi, setSelectedPoi, addPoiToTrip,
   }
 }

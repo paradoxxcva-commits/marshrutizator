@@ -5,7 +5,7 @@ import remarkGfm from 'remark-gfm'
 import remarkBreaks from 'remark-breaks'
 import { X, Clock, MapPin, ExternalLink, Phone, Euro, Edit2, Trash2, Plus, Minus, ChevronDown, ChevronUp, FileText, Upload, File, FileImage, Star, Navigation, Users, Mountain, TrendingUp } from 'lucide-react'
 import PlaceAvatar from '../shared/PlaceAvatar'
-import { mapsApi } from '../../api/client'
+
 import { useSettingsStore } from '../../store/settingsStore'
 import { getCategoryIcon } from '../shared/categoryIcons'
 import { useToast } from '../shared/Toast'
@@ -24,36 +24,7 @@ function mapsUrl(place: Place | null | undefined, ftid?: string | null, detailsU
   )
 }
 
-const detailsCache = new Map()
-
-function getSessionCache(key) {
-  try {
-    const raw = sessionStorage.getItem(key)
-    return raw ? JSON.parse(raw) : undefined
-  } catch { return undefined }
-}
-
-function setSessionCache(key, value) {
-  try { sessionStorage.setItem(key, JSON.stringify(value)) } catch {}
-}
-
-function usePlaceDetails(googlePlaceId, osmId, language) {
-  const [details, setDetails] = useState(null)
-  const detailId = googlePlaceId || osmId
-  const cacheKey = `gdetails_${detailId}_${language}`
-  useEffect(() => {
-    if (!detailId) { setDetails(null); return }
-    if (detailsCache.has(cacheKey)) { setDetails(detailsCache.get(cacheKey)); return }
-    const cached = getSessionCache(cacheKey)
-    if (cached) { detailsCache.set(cacheKey, cached); setDetails(cached); return }
-    mapsApi.details(detailId, language).then(data => {
-      detailsCache.set(cacheKey, data.place)
-      setSessionCache(cacheKey, data.place)
-      setDetails(data.place)
-    }).catch(() => {})
-  }, [detailId, language])
-  return details
-}
+import { usePlaceDetails } from '../shared/usePlaceDetails'
 
 function getWeekdayIndex(dateStr) {
   // weekdayDescriptions[0] = Monday … [6] = Sunday

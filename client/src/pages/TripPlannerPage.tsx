@@ -52,6 +52,7 @@ import { usePoiExplore } from '../components/Map/usePoiExplore'
 import PoiCategoryPill from '../components/Map/PoiCategoryPill'
 import MapStyleToggle from '../components/Map/MapStyleToggle'
 import MapSearchBar from '../components/Map/MapSearchBar'
+import PlacePreviewCard from '../components/Map/PlacePreviewCard'
 
 function ListsContainer({ tripId, packingItems, todoItems }: { tripId: number; packingItems: PackingItem[]; todoItems: TodoItem[] }) {
   const [subTab, setSubTab] = useState<'packing' | 'todo'>(() => {
@@ -212,6 +213,7 @@ export default function TripPlannerPage(): React.ReactElement | null {
     handleSaveReservation, handleSaveTransport, handleDeleteReservation,
     selectedPlace, dayOrderMap, dayPlaces,
     mapTileUrl, defaultCenter, defaultZoom, fontStyle, splashDone,
+    selectedPoi, setSelectedPoi, addPoiToTrip,
   } = useTripPlanner()
 
   const poi = usePoiExplore()
@@ -338,11 +340,9 @@ export default function TripPlannerPage(): React.ReactElement | null {
             <MapSearchBar
               flyTo={(lat, lng, zoom = 15) => {
                 if (glMap) {
-                  // MapLibre GL: flyTo({ center: [lng, lat], zoom, duration })
                   (glMap as any).flyTo({ center: [lng, lat], zoom, duration: 1000 })
                 }
               }}
-              onPlaceSelect={openAddPlaceFromSearch}
             />
 
             {(poiPillEnabled || glMap) && (
@@ -541,6 +541,15 @@ export default function TripPlannerPage(): React.ReactElement | null {
                 />
               )
             })()}
+
+            {/* POI preview card — shown when clicking explore markers */}
+            {selectedPoi && !selectedPlace && (
+              <PlacePreviewCard
+                poi={selectedPoi}
+                onAdd={() => addPoiToTrip(selectedPoi)}
+                onClose={() => setSelectedPoi(null)}
+              />
+            )}
 
             {selectedPlace && !isMobile && (
               <Suspense fallback={null}>

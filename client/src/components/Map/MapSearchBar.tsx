@@ -12,10 +12,9 @@ interface SearchResult {
 
 interface Props {
   flyTo: (lat: number, lng: number, zoom?: number) => void
-  onPlaceSelect?: (place: { lat: number; lng: number; name: string; address: string; google_place_id: string }) => void
 }
 
-export default function MapSearchBar({ flyTo, onPlaceSelect }: Props) {
+export default function MapSearchBar({ flyTo }: Props) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
   const [open, setOpen] = useState(false)
@@ -77,7 +76,6 @@ export default function MapSearchBar({ flyTo, onPlaceSelect }: Props) {
       setResults([])
       setOpen(false)
       flyTo(lat, lng, 15)
-      onPlaceSelect?.({ lat, lng, name: d.name || result.name, address: d.address || result.address, google_place_id: result.placeId })
       try {
         const h = JSON.parse(localStorage.getItem('marshrutizator_search_history') || '[]')
         const entry = { name: d.name || result.name, address: d.address || result.address, lat, lng, google_place_id: result.placeId }

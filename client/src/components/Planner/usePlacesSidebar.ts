@@ -20,7 +20,6 @@ export interface PlacesSidebarProps {
   selectedPlaceId: number | null
   onPlaceClick: (placeId: number | null) => void
   onAddPlace: () => void
-  onAddPlaceFromSearch?: (place: { lat: number; lng: number; name: string; address: string; google_place_id: string }) => void
   onAssignToDay: (placeId: number, dayId: number) => void
   onEditPlace: (place: Place) => void
   onDeletePlace: (placeId: number) => void

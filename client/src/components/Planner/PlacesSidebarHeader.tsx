@@ -2,8 +2,6 @@ import { Search, Plus, X, Upload, ChevronDown, Check, MapPin } from 'lucide-reac
 import { getCategoryIcon } from '../shared/categoryIcons'
 import Tooltip from '../shared/Tooltip'
 import type { SidebarState } from './usePlacesSidebar'
-import { useState, useRef, useCallback, useEffect } from 'react'
-import { mapsApi } from '../../api/client'
 
 export function PlacesDropOverlay({ t }: SidebarState) {
   return (
@@ -23,71 +21,12 @@ export function PlacesDropOverlay({ t }: SidebarState) {
 
 export function PlacesHeader(S: SidebarState) {
   const {
-    canEditPlaces, onAddPlace, onAddPlaceFromSearch, t, setFileImportOpen, setListImportOpen, hasMultipleListImportProviders,
+    canEditPlaces, onAddPlace, t, setFileImportOpen, setListImportOpen, hasMultipleListImportProviders,
     places, categories, categoryFilters, search, setSearch, plannedIds, hasTracks,
     filter, setFilter, onPlacesFilterChange, setSelectedIds, selectMode, setSelectMode,
     catDropOpen, setCatDropOpen, toggleCategoryFilter, setCategoryFiltersLocal, onCategoryFilterChange,
   } = S
 
-  // Google Places autocomplete
-  const [suggestions, setSuggestions] = useState<{ placeId: string; mainText: string; secondaryText: string }[]>([])
-  const [suggestOpen, setSuggestOpen] = useState(false)
-  const [suggestLoading, setSuggestLoading] = useState(false)
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const abortRef = useRef<AbortController | null>(null)
-
-  const fetchSuggestions = useCallback(async (q: string) => {
-    abortRef.current?.abort()
-    const controller = new AbortController()
-    abortRef.current = controller
-    setSuggestLoading(true)
-    try {
-      const data = await mapsApi.autocomplete(q, 'ru', undefined, controller.signal)
-      if (!controller.signal.aborted) {
-        setSuggestions(data.suggestions || [])
-      }
-    } catch {
-      if (!controller.signal.aborted) setSuggestions([])
-    } finally {
-      if (!controller.signal.aborted) setSuggestLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    const trimmed = search.trim()
-    if (trimmed.length < 2 || !onAddPlaceFromSearch) {
-      setSuggestions([])
-      abortRef.current?.abort()
-      return
-    }
-    debounceRef.current = setTimeout(() => fetchSuggestions(trimmed), 300)
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
-  }, [search, onAddPlaceFromSearch, fetchSuggestions])
-
-  const selectSuggestion = useCallback(async (s: { placeId: string; mainText: string; secondaryText: string }) => {
-    try {
-      const res = await mapsApi.details(s.placeId, 'ru')
-      const d = res.place || res
-      const placeData = {
-        lat: d.lat,
-        lng: d.lng,
-        name: d.name || s.mainText,
-        address: d.address || s.secondaryText,
-        google_place_id: s.placeId,
-      }
-      // Save to search history
-      try {
-        const history = JSON.parse(localStorage.getItem('marshrutizator_search_history') || '[]')
-        const filtered = [placeData, ...history.filter((h: any) => h.google_place_id !== s.placeId)].slice(0, 5)
-        localStorage.setItem('marshrutizator_search_history', JSON.stringify(filtered))
-      } catch {}
-      // Don't open PlaceFormModal — just set search field
-      setSearch(d.name || s.mainText)
-      setSuggestions([])
-      setSuggestOpen(false)
-    } catch {}
-  }, [setSearch])
   return (
     <div className="border-b border-edge-faint" style={{ padding: '14px 16px 10px', flexShrink: 0 }}>
       {canEditPlaces && <button
@@ -187,16 +126,14 @@ export function PlacesHeader(S: SidebarState) {
         )
       })()}
 
-      {/* Suchfeld */}
+      {/* Local filter input */}
       <div style={{ position: 'relative' }}>
         <Search size={13} strokeWidth={1.8} color="var(--text-faint)" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
         <input
           type="text"
           value={search}
-          onChange={e => { setSearch(e.target.value); setSuggestOpen(true); if (selectMode) setSelectedIds(new Set()) }}
-          onFocus={() => { if (suggestions.length > 0 || !search) setSuggestOpen(true) }}
-          onBlur={() => setTimeout(() => setSuggestOpen(false), 200)}
-          placeholder={onAddPlaceFromSearch ? 'Поиск мест на карте...' : t('places.search')}
+          onChange={e => { setSearch(e.target.value); if (selectMode) setSelectedIds(new Set()) }}
+          placeholder={t('places.search')}
           className="bg-surface-tertiary text-content"
           style={{
             width: '100%', padding: '7px 30px 7px 30px', borderRadius: 10,
@@ -205,86 +142,9 @@ export function PlacesHeader(S: SidebarState) {
           }}
         />
         {search && (
-          <button onClick={() => { setSearch(''); setSuggestions([]); setSuggestOpen(false) }} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex' }}>
+          <button onClick={() => setSearch('')} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex' }}>
             <X size={12} strokeWidth={2} color="var(--text-faint)" />
           </button>
-        )}
-
-        {/* Search history (when empty and focused) */}
-        {suggestOpen && !search && onAddPlaceFromSearch && (() => {
-          try {
-            const hist = JSON.parse(localStorage.getItem('marshrutizator_search_history') || '[]')
-            if (hist.length === 0) return null
-            return (
-              <div style={{
-                position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
-                marginTop: 4, background: 'var(--bg-card)', borderRadius: 10,
-                boxShadow: '0 4px 16px rgba(0,0,0,0.15)', overflow: 'hidden',
-                border: '1px solid var(--border-primary)',
-              }}>
-                <div style={{ padding: '6px 10px', fontSize: 10, fontWeight: 600, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Недавние
-                </div>
-                {hist.map((h: any, i: number) => (
-                  <button key={i}
-                    onMouseDown={() => {
-                      setSearch(h.name)
-                      setSuggestOpen(false)
-                    }}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-                      padding: '8px 10px', border: 'none', background: 'transparent',
-                      cursor: 'pointer', textAlign: 'left', borderTop: '1px solid var(--border-faint)',
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                  >
-                    <MapPin size={14} style={{ color: 'var(--text-faint)', flexShrink: 0 }} />
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.name}</div>
-                      {h.address && <div style={{ fontSize: 10, color: 'var(--text-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.address}</div>}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )
-          } catch { return null }
-        })()}
-
-        {/* Google Places autocomplete dropdown */}
-        {suggestOpen && onAddPlaceFromSearch && suggestions.length > 0 && (
-          <div style={{
-            position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
-            marginTop: 4, background: 'var(--bg-card)', borderRadius: 10,
-            boxShadow: '0 4px 16px rgba(0,0,0,0.15)', overflow: 'hidden',
-            border: '1px solid var(--border-primary)',
-          }}>
-            <div style={{ padding: '6px 10px', fontSize: 10, fontWeight: 600, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Google Places
-            </div>
-            {suggestions.map(s => (
-              <button
-                key={s.placeId}
-                onMouseDown={() => selectSuggestion(s)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-                  padding: '8px 10px', border: 'none', background: 'transparent',
-                  cursor: 'pointer', textAlign: 'left', borderTop: '1px solid var(--border-faint)',
-                }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
-                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-              >
-                <MapPin size={14} style={{ color: 'var(--text-faint)', flexShrink: 0 }} />
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.mainText}</div>
-                  {s.secondaryText && <div style={{ fontSize: 10, color: 'var(--text-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.secondaryText}</div>}
-                </div>
-              </button>
-            ))}
-            {suggestLoading && (
-              <div style={{ padding: '8px 10px', fontSize: 11, color: 'var(--text-faint)', textAlign: 'center' }}>Поиск...</div>
-            )}
-          </div>
         )}
       </div>
 
