@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Search, MapPin, X, LocateFixed } from 'lucide-react'
+import { Search, MapPin, X, LocateFixed, Link } from 'lucide-react'
 import { mapsApi } from '../../api/client'
 
 interface SearchResult {
@@ -8,6 +8,11 @@ interface SearchResult {
   address: string
   lat: number
   lng: number
+}
+
+function isGoogleMapsUrl(text: string): boolean {
+  const t = text.trim().toLowerCase()
+  return t.includes('maps.app.goo.gl') || t.includes('google.com/maps') || t.includes('goo.gl/maps') || t.includes('maps.google')
 }
 
 interface Props {
@@ -20,6 +25,7 @@ export default function MapSearchBar({ flyTo }: Props) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [locating, setLocating] = useState(false)
+  const isUrl = isGoogleMapsUrl(query.trim())
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const abortRef = useRef<AbortController | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -59,10 +65,41 @@ export default function MapSearchBar({ flyTo }: Props) {
     }
   }, [])
 
+  // Handle Google Maps URLs — resolve and fly immediately
+  const resolveUrlRef = useRef<AbortController | null>(null)
+  useEffect(() => {
+    const trimmed = query.trim()
+    if (!isGoogleMapsUrl(trimmed)) return
+    resolveUrlRef.current?.abort()
+    const ctrl = new AbortController()
+    resolveUrlRef.current = ctrl
+    setLoading(true)
+    setResults([])
+    mapsApi.resolveUrl(trimmed).then((res: any) => {
+      if (ctrl.signal.aborted) return
+      const d = res.place || res
+      if (d.lat && d.lng) {
+        flyTo(d.lat, d.lng, 16)
+        setOpen(false)
+        // Save to history
+        try {
+          const h = JSON.parse(localStorage.getItem('marshrutizator_search_history') || '[]')
+          const entry = { name: d.name || 'Google Maps', address: d.address || '', lat: d.lat, lng: d.lng, google_place_id: d.google_place_id || '' }
+          const filtered = [entry, ...h.filter((x: any) => !(x.lat === d.lat && x.lng === d.lng))].slice(0, 5)
+          localStorage.setItem('marshrutizator_search_history', JSON.stringify(filtered))
+          setHistory(filtered)
+        } catch {}
+      }
+      setQuery('')
+    }).catch(() => {}).finally(() => { if (!ctrl.signal.aborted) setLoading(false) })
+    return () => ctrl.abort()
+  }, [query, flyTo])
+
+  // Normal search suggestions
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
     const trimmed = query.trim()
-    if (trimmed.length < 2) { setResults([]); abortRef.current?.abort(); return }
+    if (trimmed.length < 2 || isGoogleMapsUrl(trimmed)) { setResults([]); abortRef.current?.abort(); return }
     debounceRef.current = setTimeout(() => fetchSuggestions(trimmed), 300)
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
   }, [query, fetchSuggestions])
@@ -116,7 +153,7 @@ export default function MapSearchBar({ flyTo }: Props) {
       </button>
 
       <div style={barStyle}>
-        <Search size={16} style={{ color: 'var(--text-faint)', flexShrink: 0 }} />
+        {isUrl ? <Link size={16} style={{ color: '#4285F4', flexShrink: 0 }} /> : <Search size={16} style={{ color: 'var(--text-faint)', flexShrink: 0 }} />}
         <input
           ref={inputRef}
           type="text"
@@ -124,7 +161,7 @@ export default function MapSearchBar({ flyTo }: Props) {
           onChange={e => { setQuery(e.target.value); setOpen(true) }}
           onFocus={() => setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 200)}
-          placeholder="Поиск мест..."
+          placeholder={isUrl ? 'Вставьте ссылку из Google Maps...' : 'Поиск мест...'}
           style={{
             flex: 1, border: 'none', outline: 'none', background: 'transparent',
             color: 'var(--text-primary)', fontSize: 13, fontFamily: 'inherit',
