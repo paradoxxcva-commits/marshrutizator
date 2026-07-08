@@ -1,4 +1,5 @@
 import React from 'react'
+import { useState } from 'react'
 import { adminApi } from '../api/client'
 import DevNotificationsPanel from '../components/Admin/DevNotificationsPanel'
 import DefaultUserSettingsTab from '../components/Admin/DefaultUserSettingsTab'
@@ -46,6 +47,7 @@ export default function AdminPage(): React.ReactElement {
     { id: 'audit', label: t('admin.tabs.audit'), icon: ScrollText },
     ...(mcpEnabled ? [{ id: 'mcp-tokens', label: t('admin.tabs.mcpTokens'), icon: KeyRound }] : []),
     { id: 'github', label: t('admin.tabs.github'), icon: GitBranch },
+    { id: 'test-api', label: 'Тест API', icon: Bug },
     ...(devMode ? [{ id: 'dev-notifications', label: 'Dev: Notifications', icon: Bug }] : []),
   ]
 
@@ -158,10 +160,59 @@ export default function AdminPage(): React.ReactElement {
           {activeTab === 'defaults' && <DefaultUserSettingsTab />}
 
           {activeTab === 'dev-notifications' && <DevNotificationsPanel />}
+
+          {activeTab === 'test-api' && <TestDescribePlacePanel />}
           </PageSidebar>
         </div>
 
       <AdminUserModals admin={admin} t={t} />
     </PageShell>
+  )
+}
+
+function TestDescribePlacePanel() {
+  const [result, setResult] = useState<string>('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const testEndpoint = async () => {
+    setLoading(true)
+    setError('')
+    setResult('')
+    try {
+      const res = await fetch('/api/test/describe-place?lat=57.249866&lng=60.074758')
+      const data = await res.json()
+      setResult(JSON.stringify(data, null, 2))
+    } catch (e: any) {
+      setError(e.message || 'Request failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold text-slate-900">Тест описания мест</h3>
+      <p className="text-sm text-slate-500">
+        Проверка интеграции с внешним сервисом описания мест (webhook).
+      </p>
+      <button
+        onClick={testEndpoint}
+        disabled={loading}
+        className="px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-semibold hover:bg-slate-700 disabled:opacity-50 transition-colors"
+      >
+        {loading ? 'Запрос...' : 'Проверить описание места'}
+      </button>
+      {error && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+          {error}
+        </div>
+      )}
+      {result && (
+        <pre className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 overflow-auto max-h-96">
+          {result}
+        </pre>
+      )}
+    </div>
   )
 }

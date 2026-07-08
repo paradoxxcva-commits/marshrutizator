@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { DatabaseModule } from './database/database.module';
 import { HealthController } from './health/health.controller';
+import { TestController } from './test/test.controller';
 import { HealthService } from './health/health.service';
 import { WeatherModule } from './weather/weather.module';
 import { AirportsModule } from './airports/airports.module';
@@ -47,7 +48,7 @@ import { IdempotencyInterceptor } from './common/idempotency.interceptor';
  */
 @Module({
   imports: [DatabaseModule, WeatherModule, AirportsModule, ConfigModule, SystemNoticesModule, MapsModule, CategoriesModule, TagsModule, NotificationsModule, AtlasModule, VacayModule, PackingModule, TodoModule, BudgetModule, ReservationsModule, DaysModule, AssignmentsModule, PlacesModule, TripsModule, CollabModule, FilesModule, PhotosModule, MemoriesModule, AirtrailModule, JourneyModule, ShareModule, SettingsModule, BackupModule, AuthModule, OidcModule, OauthModule, AdminModule, AddonsModule, BookingImportModule],
-  controllers: [HealthController],
+  controllers: [HealthController, TestController],
   providers: [
     HealthService,
     // Global error-envelope normaliser (DI-registered so it also catches
