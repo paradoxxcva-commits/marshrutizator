@@ -25,22 +25,6 @@ function isMapsUrl(text: string): boolean {
 }
 
 // Parse Yandex Maps URL to extract coordinates
-function parseYandexCoords(url: string): { lat: number; lng: number } | null {
-  try {
-    const u = new URL(url)
-    // Long URL: ?ll=37.6173,55.7558&z=15
-    const ll = u.searchParams.get('ll')
-    if (ll) {
-      const [lng, lat] = ll.split(',').map(Number)
-      if (lat && lng) return { lat, lng }
-    }
-    // Short URL: /-/CTuajOPj — need to follow redirect (handled separately)
-    return null
-  } catch {
-    return null
-  }
-}
-
 interface Props {
   flyTo: (lat: number, lng: number, zoom?: number) => void
 }
@@ -115,28 +99,11 @@ export default function MapSearchBar({ flyTo }: Props) {
       setQuery('')
     }
 
-    // Yandex Maps — try parsing coords directly first
-    if (isYandexMapsUrl(trimmed)) {
-      const coords = parseYandexCoords(trimmed)
-      if (coords) {
-        flyAndSave(coords.lat, coords.lng, 'Yandex Maps')
-        setLoading(false)
-        return
-      }
-      // Short link — follow redirect to get final URL
-      fetch(trimmed, { method: 'HEAD', redirect: 'follow', signal: ctrl.signal })
-        .then(r => parseYandexCoords(r.url))
-        .then(coords => { if (coords && !ctrl.signal.aborted) flyAndSave(coords.lat, coords.lng, 'Yandex Maps') })
-        .catch(() => {})
-        .finally(() => { if (!ctrl.signal.aborted) setLoading(false) })
-      return () => ctrl.abort()
-    }
-
-    // Google Maps — use server-side resolve
+    // All map URLs — use server-side resolve (handles Google + Yandex)
     mapsApi.resolveUrl(trimmed).then((res: any) => {
       if (ctrl.signal.aborted) return
       const d = res.place || res
-      if (d.lat && d.lng) flyAndSave(d.lat, d.lng, d.name || 'Google Maps')
+      if (d.lat && d.lng) flyAndSave(d.lat, d.lng, d.name || 'Карта')
     }).catch(() => {}).finally(() => { if (!ctrl.signal.aborted) setLoading(false) })
     return () => ctrl.abort()
   }, [query, flyTo])

@@ -32,7 +32,7 @@ export default function PlacePreviewCard({ poi, onAdd, onClose }: Props) {
 
   const cardStyle: React.CSSProperties = {
     position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)',
-    zIndex: 200, width: 'min(360px, calc(100vw - 32px))',
+    zIndex: 200, width: 'min(30vw, 450px)',
     background: 'var(--bg-card)', borderRadius: 16,
     boxShadow: '0 8px 32px rgba(0,0,0,0.18)', overflow: 'hidden',
     border: '1px solid var(--border-primary)',

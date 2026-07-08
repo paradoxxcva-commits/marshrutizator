@@ -1128,15 +1128,22 @@ export async function reverseGeocode(lat: string, lng: string, lang?: string): P
 export async function resolveGoogleMapsUrl(url: string): Promise<{ lat: number; lng: number; name: string | null; address: string | null; google_ftid: string | null }> {
   let resolvedUrl = url;
 
-  // Extract coordinates from a string (URL or page body). Google Maps encodes
-  // them several ways: /@lat,lng,zoom · !3dlat!4dlng (map data param) · ?q=/?ll=.
+  // Extract coordinates from a string (URL or page body).
+  // Google Maps: /@lat,lng,zoom · !3dlat!4dlng · ?q=lat,lng
+  // Yandex Maps: ?ll=lng,lat (note: longitude first!)
   const extractCoords = (s: string): { lat: number; lng: number } | null => {
-    const at = s.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+    // Decode URL-encoded characters first (%2C → ,)
+    const decoded = decodeURIComponent(s);
+    const at = decoded.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
     if (at) return { lat: parseFloat(at[1]), lng: parseFloat(at[2]) };
-    const data = s.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+    const data = decoded.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
     if (data) return { lat: parseFloat(data[1]), lng: parseFloat(data[2]) };
-    const q = s.match(/[?&](?:q|ll)=(-?\d+\.\d+),(-?\d+\.\d+)/);
-    if (q) return { lat: parseFloat(q[1]), lng: parseFloat(q[2]) };
+    // Google ?q= or ?ll=lat,lng
+    const gq = decoded.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if (gq) return { lat: parseFloat(gq[1]), lng: parseFloat(gq[2]) };
+    // Yandex ?ll=lng,lat (longitude first!)
+    const yll = decoded.match(/[?&]ll=(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if (yll) return { lat: parseFloat(yll[2]), lng: parseFloat(yll[1]) };
     return null;
   };
 
@@ -1155,16 +1162,15 @@ export async function resolveGoogleMapsUrl(url: string): Promise<{ lat: number; 
     }
   };
 
-  // Follow redirects for short URLs (goo.gl, maps.app.goo.gl) and for Google Maps
-  // URLs that carry no inline coordinates — e.g. ?cid= links (the format
-  // get_place_details returns) and "Share"-button links. The redirect target
-  // usually carries the !3d!4d data param we can then parse. Redirects are
-  // followed manually so every hop is SSRF-re-checked.
+  // Follow redirects for short URLs (goo.gl, maps.app.goo.gl, yandex.ru/maps/-/) 
+  // and for Google Maps URLs that carry no inline coordinates.
   const parsed = new URL(url);
   const GOOGLE_MAPS_HOSTS = ['goo.gl', 'maps.app.goo.gl', 'google.com', 'www.google.com', 'maps.google.com'];
+  const YANDEX_MAPS_HOSTS = ['yandex.ru', 'yandex.com', 'ya.ru'];
   const isShort = ['goo.gl', 'maps.app.goo.gl'].includes(parsed.hostname);
   const isGoogleMaps = GOOGLE_MAPS_HOSTS.includes(parsed.hostname);
-  if (isShort || (isGoogleMaps && !extractCoords(url))) {
+  const isYandexMaps = YANDEX_MAPS_HOSTS.includes(parsed.hostname) && parsed.pathname.includes('/maps');
+  if (isShort || isYandexMaps || (isGoogleMaps && !extractCoords(url))) {
     resolvedUrl = (await followRedirects(url)).url || resolvedUrl;
   }
 
