@@ -22,7 +22,7 @@ export class TestController {
     try {
       const response = await fetch('http://192.168.31.243:8644/webhooks/describe-place', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Webhook-Secret': 'nhBAnRqPSSvG4eO7J_Du9NCUyc23iZqT51UhLLAoeh4' },
         body: JSON.stringify({ lat: latNum, lng: lngNum }),
         signal: AbortSignal.timeout(30000),
       });
