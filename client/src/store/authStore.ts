@@ -119,6 +119,7 @@ export const useAuthStore = create<AuthState>()(
         isAuthenticated: true,
         isLoading: false,
         error: null,
+        hasMapsKey: !!(data.user as any)?.maps_api_key,
       })
       await onAuthSuccess(data.user.id)
       connect()
@@ -126,6 +127,12 @@ export const useAuthStore = create<AuthState>()(
       if (!data.user?.must_change_password) {
         useSystemNoticeStore.getState().fetch()
       }
+      // Fetch full user object (includes maps_api_key) from /api/auth/me
+      setTimeout(() => {
+        authApi.me().then((me: any) => {
+          if (me?.user) set({ user: me.user, hasMapsKey: !!me.user.maps_api_key })
+        }).catch(() => {})
+      }, 500)
       return data as AuthResponse
     } catch (err: unknown) {
       const error = getApiErrorMessage(err, 'Login failed')
@@ -223,6 +230,7 @@ export const useAuthStore = create<AuthState>()(
         isAuthenticated: true,
         isLoading: false,
         authCheckFailed: false,
+        hasMapsKey: !!(data.user as any)?.maps_api_key,
       })
       await onAuthSuccess(data.user.id)
       connect()
