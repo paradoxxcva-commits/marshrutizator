@@ -55,7 +55,6 @@ interface Props {
   showReservationStats?: boolean
   onReservationClick?: (reservationId: number) => void
   pois?: Poi[]
-  googlePois?: Poi[]
   onPoiClick?: (poi: Poi) => void
   onViewportChange?: (bbox: { south: number; west: number; north: number; east: number }) => void
   glProvider?: GlMapProvider
@@ -173,7 +172,6 @@ export function MapViewGL({
   showReservationStats = false,
   onReservationClick,
   pois = [],
-  googlePois = [],
   onPoiClick,
   onViewportChange,
   glProvider = 'mapbox-gl',
@@ -549,25 +547,6 @@ export function MapViewGL({
       poiMarkersRef.current.push(m)
     }
   }, [pois, mapReady, glProvider])
-
-  // Google POI markers — separate layer with blue border
-  const googlePoiMarkersRef = useRef<any[]>([])
-  useEffect(() => {
-    const map = mapRef.current
-    if (!map || !mapReady) return
-    googlePoiMarkersRef.current.forEach(m => m.remove())
-    googlePoiMarkersRef.current = []
-    for (const poi of (googlePois as Poi[])) {
-      const el = createPoiMarkerElement(poi.category, '#4285F4') // blue border for Google
-      el.addEventListener('mouseenter', () => {
-        popupRef.current?.setLngLat([poi.lng, poi.lat]).setHTML(buildPoiPopupHtml(poi)).addTo(map)
-      })
-      el.addEventListener('mouseleave', () => { popupRef.current?.remove() })
-      el.addEventListener('click', (ev) => { ev.stopPropagation(); onPoiClickRef.current?.(poi) })
-      const m = new gl.Marker({ element: el, anchor: 'center' }).setLngLat([poi.lng, poi.lat]).addTo(map)
-      googlePoiMarkersRef.current.push(m)
-    }
-  }, [googlePois, mapReady, glProvider])
 
   // Update route geojson
   useEffect(() => {

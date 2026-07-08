@@ -15,6 +15,32 @@ function isGoogleMapsUrl(text: string): boolean {
   return t.includes('maps.app.goo.gl') || t.includes('google.com/maps') || t.includes('goo.gl/maps') || t.includes('maps.google')
 }
 
+function isYandexMapsUrl(text: string): boolean {
+  const t = text.trim().toLowerCase()
+  return t.includes('yandex.ru/maps') || t.includes('yandex.com/maps') || t.includes('ya.ru/maps')
+}
+
+function isMapsUrl(text: string): boolean {
+  return isGoogleMapsUrl(text) || isYandexMapsUrl(text)
+}
+
+// Parse Yandex Maps URL to extract coordinates
+function parseYandexCoords(url: string): { lat: number; lng: number } | null {
+  try {
+    const u = new URL(url)
+    // Long URL: ?ll=37.6173,55.7558&z=15
+    const ll = u.searchParams.get('ll')
+    if (ll) {
+      const [lng, lat] = ll.split(',').map(Number)
+      if (lat && lng) return { lat, lng }
+    }
+    // Short URL: /-/CTuajOPj — need to follow redirect (handled separately)
+    return null
+  } catch {
+    return null
+  }
+}
+
 interface Props {
   flyTo: (lat: number, lng: number, zoom?: number) => void
 }
@@ -25,7 +51,7 @@ export default function MapSearchBar({ flyTo }: Props) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [locating, setLocating] = useState(false)
-  const isUrl = isGoogleMapsUrl(query.trim())
+  const isUrl = isMapsUrl(query.trim())
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const abortRef = useRef<AbortController | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -65,32 +91,52 @@ export default function MapSearchBar({ flyTo }: Props) {
     }
   }, [])
 
-  // Handle Google Maps URLs — resolve and fly immediately
+  // Handle map URLs (Google Maps + Yandex Maps) — resolve and fly immediately
   const resolveUrlRef = useRef<AbortController | null>(null)
   useEffect(() => {
     const trimmed = query.trim()
-    if (!isGoogleMapsUrl(trimmed)) return
+    if (!isMapsUrl(trimmed)) return
     resolveUrlRef.current?.abort()
     const ctrl = new AbortController()
     resolveUrlRef.current = ctrl
     setLoading(true)
     setResults([])
+
+    const flyAndSave = (lat: number, lng: number, name: string) => {
+      flyTo(lat, lng, 16)
+      setOpen(false)
+      try {
+        const h = JSON.parse(localStorage.getItem('marshrutizator_search_history') || '[]')
+        const entry = { name, address: '', lat, lng, google_place_id: '' }
+        const filtered = [entry, ...h.filter((x: any) => !(x.lat === lat && x.lng === lng))].slice(0, 5)
+        localStorage.setItem('marshrutizator_search_history', JSON.stringify(filtered))
+        setHistory(filtered)
+      } catch {}
+      setQuery('')
+    }
+
+    // Yandex Maps — try parsing coords directly first
+    if (isYandexMapsUrl(trimmed)) {
+      const coords = parseYandexCoords(trimmed)
+      if (coords) {
+        flyAndSave(coords.lat, coords.lng, 'Yandex Maps')
+        setLoading(false)
+        return
+      }
+      // Short link — follow redirect to get final URL
+      fetch(trimmed, { method: 'HEAD', redirect: 'follow', signal: ctrl.signal })
+        .then(r => parseYandexCoords(r.url))
+        .then(coords => { if (coords && !ctrl.signal.aborted) flyAndSave(coords.lat, coords.lng, 'Yandex Maps') })
+        .catch(() => {})
+        .finally(() => { if (!ctrl.signal.aborted) setLoading(false) })
+      return () => ctrl.abort()
+    }
+
+    // Google Maps — use server-side resolve
     mapsApi.resolveUrl(trimmed).then((res: any) => {
       if (ctrl.signal.aborted) return
       const d = res.place || res
-      if (d.lat && d.lng) {
-        flyTo(d.lat, d.lng, 16)
-        setOpen(false)
-        // Save to history
-        try {
-          const h = JSON.parse(localStorage.getItem('marshrutizator_search_history') || '[]')
-          const entry = { name: d.name || 'Google Maps', address: d.address || '', lat: d.lat, lng: d.lng, google_place_id: d.google_place_id || '' }
-          const filtered = [entry, ...h.filter((x: any) => !(x.lat === d.lat && x.lng === d.lng))].slice(0, 5)
-          localStorage.setItem('marshrutizator_search_history', JSON.stringify(filtered))
-          setHistory(filtered)
-        } catch {}
-      }
-      setQuery('')
+      if (d.lat && d.lng) flyAndSave(d.lat, d.lng, d.name || 'Google Maps')
     }).catch(() => {}).finally(() => { if (!ctrl.signal.aborted) setLoading(false) })
     return () => ctrl.abort()
   }, [query, flyTo])
@@ -99,7 +145,7 @@ export default function MapSearchBar({ flyTo }: Props) {
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
     const trimmed = query.trim()
-    if (trimmed.length < 2 || isGoogleMapsUrl(trimmed)) { setResults([]); abortRef.current?.abort(); return }
+    if (trimmed.length < 2 || isMapsUrl(trimmed)) { setResults([]); abortRef.current?.abort(); return }
     debounceRef.current = setTimeout(() => fetchSuggestions(trimmed), 300)
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
   }, [query, fetchSuggestions])
@@ -153,7 +199,7 @@ export default function MapSearchBar({ flyTo }: Props) {
       </button>
 
       <div style={barStyle}>
-        {isUrl ? <Link size={16} style={{ color: '#4285F4', flexShrink: 0 }} /> : <Search size={16} style={{ color: 'var(--text-faint)', flexShrink: 0 }} />}
+        {isUrl ? <Link size={16} style={{ color: '#FF6B00', flexShrink: 0 }} /> : <Search size={16} style={{ color: 'var(--text-faint)', flexShrink: 0 }} />}
         <input
           ref={inputRef}
           type="text"
@@ -161,7 +207,7 @@ export default function MapSearchBar({ flyTo }: Props) {
           onChange={e => { setQuery(e.target.value); setOpen(true) }}
           onFocus={() => setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 200)}
-          placeholder={isUrl ? 'Вставьте ссылку из Google Maps...' : 'Поиск мест...'}
+          placeholder={isUrl ? 'Ссылка из Google/Yandex Maps...' : 'Поиск мест...'}
           style={{
             flex: 1, border: 'none', outline: 'none', background: 'transparent',
             color: 'var(--text-primary)', fontSize: 13, fontFamily: 'inherit',

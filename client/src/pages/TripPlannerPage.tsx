@@ -49,9 +49,9 @@ import type { Accommodation, TripMember, Day, Place, Reservation, PackingItem, T
 import { ListTodo, Upload, Plus, Trash2, FolderPlus } from 'lucide-react'
 import { useTripPlanner } from './tripPlanner/useTripPlanner'
 import { usePoiExplore } from '../components/Map/usePoiExplore'
-import { useGooglePoiExplore } from '../components/Map/useGooglePoiExplore'
+
 import PoiCategoryPill from '../components/Map/PoiCategoryPill'
-import GooglePoiPill from '../components/Map/GooglePoiPill'
+
 import MapStyleToggle from '../components/Map/MapStyleToggle'
 import MapSearchBar from '../components/Map/MapSearchBar'
 const PlacePreviewCard = lazy(() => import('../components/Map/PlacePreviewCard'))
@@ -219,7 +219,6 @@ export default function TripPlannerPage(): React.ReactElement | null {
   } = useTripPlanner()
 
   const poi = usePoiExplore()
-  const googlePoi = useGooglePoiExplore()
   const [glMap, setGlMap] = useState<CompassMap | null>(null)
   const poiPillEnabled = useSettingsStore(s => s.settings.map_poi_pill_enabled) !== false
 
@@ -333,9 +332,8 @@ export default function TripPlannerPage(): React.ReactElement | null {
                 if (r) setMapTransportDetail(r)
               }}
               pois={poi.pois}
-              googlePois={googlePoi.googlePois}
               onPoiClick={openAddPlaceFromPoi}
-              onViewportChange={(bbox) => { poi.onViewportChange(bbox); googlePoi.onViewportChange(bbox) }}
+              onViewportChange={poi.onViewportChange}
               onMapReady={setGlMap}
             />
 
@@ -350,7 +348,6 @@ export default function TripPlannerPage(): React.ReactElement | null {
 
             {(poiPillEnabled || glMap) && (
               <div className="hidden md:flex" style={{ position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)', zIndex: 25, pointerEvents: 'none', alignItems: 'flex-start', gap: 8 }}>
-                <GooglePoiPill enabled={googlePoi.enabled} loading={googlePoi.loading} onToggle={googlePoi.toggle} />
                 {poiPillEnabled && (
                   <PoiCategoryPill active={poi.active} onToggle={poi.toggle} loadingKeys={poi.loadingKeys} errorKeys={poi.errorKeys} moved={poi.moved} onSearchArea={poi.searchArea} />
                 )}
