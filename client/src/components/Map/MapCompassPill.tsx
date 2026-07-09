@@ -7,9 +7,10 @@ import { Navigation } from 'lucide-react'
 export function MapCompassPill({ map }: { map: any }) {
   const resetNorth = () => {
     if (!map) return
-    // Google Maps: reset tilt and heading
-    map.setTilt(0)
-    map.setHeading(0)
+    // MapLibre GL: reset bearing and pitch
+    if (typeof map.easeTo === 'function') {
+      map.easeTo({ bearing: 0, pitch: 0, duration: 300 })
+    }
   }
 
   return (
