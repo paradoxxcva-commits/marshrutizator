@@ -102,7 +102,7 @@ export function applyGlobalMiddleware(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'wasm-unsafe-eval'", "'unsafe-eval'", "https://maps.googleapis.com"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'wasm-unsafe-eval'", "'unsafe-eval'", "https://maps.googleapis.com"],
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://unpkg.com"],
         imgSrc: ["'self'", "data:", "blob:", "https:"],
         connectSrc: [
