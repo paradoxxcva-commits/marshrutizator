@@ -278,6 +278,7 @@ export default function TripPlannerPage(): React.ReactElement | null {
   if (!trip) return null
 
   return (
+    <ErrorBoundary>
     <div style={{ position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', ...fontStyle }}>
       <Navbar tripTitle={trip.title} tripId={tripId} showBack onBack={() => navigate('/dashboard')} onShare={() => setShowMembersModal(true)} />
 
@@ -768,5 +769,6 @@ export default function TripPlannerPage(): React.ReactElement | null {
         message={t('trip.confirm.deletePlaces', { count: deletePlaceIds?.length ?? 0 })}
       />
     </div>
+    </ErrorBoundary>
   )
 }
