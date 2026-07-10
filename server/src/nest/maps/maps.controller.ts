@@ -34,6 +34,15 @@ function toHttpException(err: unknown, fallbackMessage: string, defaultStatus: n
   return new HttpException({ error: message }, status);
 }
 
+/** In-memory cache for describe-place results. TTL: 180 days. */
+const describeCache = new Map<string, { data: unknown; at: number }>();
+const DESCRIBE_TTL = 180 * 24 * 60 * 60 * 1000; // 180 days
+const DESCRIBE_API = 'http://192.168.31.243:8899';
+
+function describeCacheKey(lat: number, lng: number) {
+  return `${lat.toFixed(4)},${lng.toFixed(4)}`;
+}
+
 /**
  * /api/maps — place search, autocomplete, details, photos, reverse geocoding and
  * Google-Maps-URL resolution.
@@ -239,6 +248,42 @@ export class MapsController {
       return await this.maps.nearby(user.id, latNum, lngNum, radiusNum);
     } catch (err: unknown) {
       throw toHttpException(err, 'Nearby search error', 500);
+    }
+  }
+
+  /**
+   * POST /api/maps/describe-place
+   * Proxies to external describe-place API (http://192.168.31.243:8899) with 180-day cache.
+   */
+  @Post('describe-place')
+  @HttpCode(200)
+  async describePlace(@Body() body: { lat?: number; lng?: number }) {
+    const { lat, lng } = body ?? {};
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      throw new HttpException({ error: 'lat and lng are required' }, 400);
+    }
+    const key = describeCacheKey(lat!, lng!);
+    const cached = describeCache.get(key);
+    if (cached && Date.now() - cached.at < DESCRIBE_TTL) {
+      return cached.data;
+    }
+    try {
+      const response = await fetch(DESCRIBE_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lat, lng }),
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!response.ok) {
+        throw new Error(`API returned ${response.status}`);
+      }
+      const data = await response.json();
+      describeCache.set(key, { data, at: Date.now() });
+      return data;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'External service error';
+      console.error('[Maps] describe-place error:', message);
+      throw new HttpException({ error: message }, 502);
     }
   }
 }

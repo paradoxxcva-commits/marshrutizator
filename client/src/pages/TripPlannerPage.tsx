@@ -54,7 +54,7 @@ import PoiCategoryPill from '../components/Map/PoiCategoryPill'
 
 import MapStyleToggle from '../components/Map/MapStyleToggle'
 import MapSearchBar from '../components/Map/MapSearchBar'
-const PlacePreviewCard = lazy(() => import('../components/Map/PlacePreviewCard'))
+const PlaceInfoCard = lazy(() => import('../components/Map/PlaceInfoCard'))
 
 function ListsContainer({ tripId, packingItems, todoItems }: { tripId: number; packingItems: PackingItem[]; todoItems: TodoItem[] }) {
   const [subTab, setSubTab] = useState<'packing' | 'todo'>(() => {
@@ -543,10 +543,10 @@ export default function TripPlannerPage(): React.ReactElement | null {
               )
             })()}
 
-            {/* POI preview card — shown when clicking explore markers */}
+            {/* POI info card — shown when clicking explore markers */}
             {selectedPoi && !selectedPlace && (
               <Suspense fallback={null}>
-                <PlacePreviewCard
+                <PlaceInfoCard
                   poi={selectedPoi}
                   onAdd={() => addPoiToTrip(selectedPoi)}
                   onClose={() => setSelectedPoi(null)}

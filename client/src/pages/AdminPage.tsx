@@ -180,7 +180,11 @@ function TestDescribePlacePanel() {
     setError('')
     setResult('')
     try {
-      const res = await fetch('/api/test/describe-place?lat=57.249866&lng=60.074758')
+      const res = await fetch('/api/maps/describe-place', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lat: 57.249866, lng: 60.074758 }),
+      })
       const data = await res.json()
       setResult(JSON.stringify(data, null, 2))
     } catch (e: any) {
